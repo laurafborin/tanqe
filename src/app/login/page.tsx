@@ -1,5 +1,7 @@
-'use client'
+﻿'use client'
 
+
+export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -73,7 +75,7 @@ export default function LoginPage() {
       }}
       className="login-grid"
     >
-      {/* LEFT — visual */}
+      {/* LEFT â€” visual */}
       <div
         style={{
           display: 'flex',
@@ -124,7 +126,7 @@ export default function LoginPage() {
               margin: 0,
             }}
           >
-            Negocie combustível com inteligência. Em tempo real. Com dados.
+            Negocie combustÃ­vel com inteligÃªncia. Em tempo real. Com dados.
           </p>
         </div>
         <Link
@@ -141,11 +143,11 @@ export default function LoginPage() {
             textDecoration: 'none',
           }}
         >
-          ← Voltar
+          â† Voltar
         </Link>
       </div>
 
-      {/* RIGHT — form */}
+      {/* RIGHT â€” form */}
       <div
         style={{
           display: 'flex',
@@ -176,7 +178,7 @@ export default function LoginPage() {
               marginBottom: 12,
             }}
           >
-            Acesso à plataforma
+            Acesso Ã  plataforma
           </p>
           <h1
             style={{
@@ -230,7 +232,7 @@ export default function LoginPage() {
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 required
-                placeholder="••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
                 style={inputStyle}
                 onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--tanqe-orange)')}
                 onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
@@ -255,7 +257,7 @@ export default function LoginPage() {
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              {loading ? 'Entrando...' : 'Entrar →'}
+              {loading ? 'Entrando...' : 'Entrar â†’'}
             </button>
           </form>
 

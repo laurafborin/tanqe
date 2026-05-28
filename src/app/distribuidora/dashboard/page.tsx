@@ -1,8 +1,10 @@
-'use client'
+﻿'use client'
 
+
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
+import dynamicImport from 'next/dynamic'
 import {
   LineChart,
   Line,
@@ -13,7 +15,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-const MapView = dynamic(() => import('@/components/map/MapView'), {
+const MapView = dynamicImport(() => import('@/components/map/MapView'), {
   ssr: false,
   loading: () => (
     <div
@@ -31,28 +33,28 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
         color: 'var(--tanqe-gray)',
       }}
     >
-      Carregando mapa…
+      Carregando mapaâ€¦
     </div>
   ),
 })
 
 // MOCK DATA
 const MOCK_USER = {
-  distLabel: 'DISTRIBUIDORA · BASE GUARULHOS/SP',
+  distLabel: 'DISTRIBUIDORA Â· BASE GUARULHOS/SP',
   greeting: 'Bom dia, BR Petro SP.',
-  subtitle: 'Você tem 14 oportunidades abertas e 6 entregas pra hoje.',
+  subtitle: 'VocÃª tem 14 oportunidades abertas e 6 entregas pra hoje.',
 }
 
 const MOCK_METRICS = [
-  { label: 'RECEITA ESTE MÊS', value: 'R$ 2.847.000', trend: { sign: 'pos' as const, text: '+9,2%' }, subtitle: 'vs. mês anterior' },
-  { label: 'VOLUME ENTREGUE', value: '487.000 L', trend: { sign: 'pos' as const, text: '+14,5%' }, subtitle: 'vs. mês anterior' },
+  { label: 'RECEITA ESTE MÃŠS', value: 'R$ 2.847.000', trend: { sign: 'pos' as const, text: '+9,2%' }, subtitle: 'vs. mÃªs anterior' },
+  { label: 'VOLUME ENTREGUE', value: '487.000 L', trend: { sign: 'pos' as const, text: '+14,5%' }, subtitle: 'vs. mÃªs anterior' },
   { label: 'OPORTUNIDADES ATIVAS', value: '14', trend: null, subtitle: 'Em 6 estados' },
-  { label: 'TAXA DE CONVERSÃO', value: '64%', trend: null, subtitle: 'Lances vencidos / lances dados' },
+  { label: 'TAXA DE CONVERSÃƒO', value: '64%', trend: null, subtitle: 'Lances vencidos / lances dados' },
 ]
 
 const MOCK_OPORTUNIDADES = [
-  { id: 'lei_001', combustivel: 'GASOLINA C', volume: 30000, cidade: 'São Paulo, SP', precoAtual: 5.61, encerraEmHoras: 14, encerraEmMin: 32, lancesCount: 3 },
-  { id: 'lei_002', combustivel: 'DIESEL S10', volume: 25000, cidade: 'São Paulo, SP', precoAtual: 5.78, encerraEmHoras: 6, encerraEmMin: 18, lancesCount: 5 },
+  { id: 'lei_001', combustivel: 'GASOLINA C', volume: 30000, cidade: 'SÃ£o Paulo, SP', precoAtual: 5.61, encerraEmHoras: 14, encerraEmMin: 32, lancesCount: 3 },
+  { id: 'lei_002', combustivel: 'DIESEL S10', volume: 25000, cidade: 'SÃ£o Paulo, SP', precoAtual: 5.78, encerraEmHoras: 6, encerraEmMin: 18, lancesCount: 5 },
   { id: 'lei_003', combustivel: 'ETANOL', volume: 12000, cidade: 'Campinas, SP', precoAtual: 3.62, encerraEmHoras: 22, encerraEmMin: 11, lancesCount: 2 },
 ]
 
@@ -64,21 +66,21 @@ const MOCK_ANP_DATA = Array.from({ length: 10 }, (_, i) => ({
 }))
 
 const MOCK_POSTOS = [
-  { id: 'pst_1', label: 'Posto Sol Nascente SP', lat: -23.55, lng: -46.63, score: 4.7, subtitle: 'São Paulo - capital' },
+  { id: 'pst_1', label: 'Posto Sol Nascente SP', lat: -23.55, lng: -46.63, score: 4.7, subtitle: 'SÃ£o Paulo - capital' },
   { id: 'pst_2', label: 'Posto Auto Norte SP', lat: -23.42, lng: -46.69, score: 4.5, subtitle: 'Zona Norte SP' },
   { id: 'pst_3', label: 'Posto Via Dutra RJ', lat: -22.91, lng: -43.30, score: 4.4, subtitle: 'Rio de Janeiro' },
   { id: 'pst_4', label: 'Posto Central Campinas', lat: -22.91, lng: -47.06, score: 4.8, subtitle: 'Campinas' },
   { id: 'pst_5', label: 'Posto BR Sorocaba', lat: -23.51, lng: -47.46, score: 4.6, subtitle: 'Sorocaba' },
-  { id: 'pst_6', label: 'Posto Galo ABC', lat: -23.67, lng: -46.50, score: 4.3, subtitle: 'Santo André' },
+  { id: 'pst_6', label: 'Posto Galo ABC', lat: -23.67, lng: -46.50, score: 4.3, subtitle: 'Santo AndrÃ©' },
   { id: 'pst_7', label: 'Posto Estrada Guarulhos', lat: -23.46, lng: -46.55, score: 4.5, subtitle: 'Guarulhos' },
   { id: 'pst_8', label: 'Posto Diadema Sul', lat: -23.69, lng: -46.62, score: 4.4, subtitle: 'Diadema' },
 ]
 
 const MOCK_ENTREGAS_HOJE = [
-  { id: 'ent_a', status: 'em_transito' as const, item: 'Diesel S10 · 25.000 L', destino: 'Posto Sol Nascente SP', eta: 'ETA 13:30' },
-  { id: 'ent_b', status: 'aguardando' as const, item: 'Gasolina C · 18.000 L', destino: 'Posto Auto Norte SP', eta: 'Saída 14:00' },
-  { id: 'ent_c', status: 'em_transito' as const, item: 'Etanol · 12.000 L', destino: 'Posto Central Campinas', eta: 'ETA 15:45' },
-  { id: 'ent_d', status: 'aguardando' as const, item: 'Diesel S500 · 30.000 L', destino: 'Posto BR Sorocaba', eta: 'Saída 16:30' },
+  { id: 'ent_a', status: 'em_transito' as const, item: 'Diesel S10 Â· 25.000 L', destino: 'Posto Sol Nascente SP', eta: 'ETA 13:30' },
+  { id: 'ent_b', status: 'aguardando' as const, item: 'Gasolina C Â· 18.000 L', destino: 'Posto Auto Norte SP', eta: 'SaÃ­da 14:00' },
+  { id: 'ent_c', status: 'em_transito' as const, item: 'Etanol Â· 12.000 L', destino: 'Posto Central Campinas', eta: 'ETA 15:45' },
+  { id: 'ent_d', status: 'aguardando' as const, item: 'Diesel S500 Â· 30.000 L', destino: 'Posto BR Sorocaba', eta: 'SaÃ­da 16:30' },
 ]
 
 const STATUS_COLOR: Record<string, string> = {
@@ -137,7 +139,7 @@ export default function DistDashboard() {
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={cardTitle}>Oportunidades em destaque</h3>
-            <Link href="/distribuidora/leiloes" style={sectionLink}>Ver todas →</Link>
+            <Link href="/distribuidora/leiloes" style={sectionLink}>Ver todas â†’</Link>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {MOCK_OPORTUNIDADES.map((l) => (
@@ -147,12 +149,12 @@ export default function DistDashboard() {
                 </span>
                 <div>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--tanqe-black)' }}>
-                    {l.volume.toLocaleString('pt-BR')} L · {l.cidade}
+                    {l.volume.toLocaleString('pt-BR')} L Â· {l.cidade}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: 12, color: 'var(--tanqe-gray)' }}>
                     <span>Atual</span>
                     <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--tanqe-orange)' }}>R$ {l.precoAtual.toFixed(2)}/L</span>
-                    <span>· {l.lancesCount} {l.lancesCount === 1 ? 'lance' : 'lances'}</span>
+                    <span>Â· {l.lancesCount} {l.lancesCount === 1 ? 'lance' : 'lances'}</span>
                   </div>
                   <div style={{ marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)' }}>
                     Encerra em {l.encerraEmHoras}h {l.encerraEmMin}m
@@ -182,8 +184,8 @@ export default function DistDashboard() {
 
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={cardTitle}>Preço médio ANP</h3>
-            <span style={eyebrow}>ÚLTIMOS 10 DIAS</span>
+            <h3 style={cardTitle}>PreÃ§o mÃ©dio ANP</h3>
+            <span style={eyebrow}>ÃšLTIMOS 10 DIAS</span>
           </div>
           <div style={{ height: 240, opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -222,7 +224,7 @@ export default function DistDashboard() {
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <h3 style={cardTitle}>Entregas de hoje</h3>
-            <Link href="/distribuidora/contratos" style={sectionLink}>Ver todas →</Link>
+            <Link href="/distribuidora/contratos" style={sectionLink}>Ver todas â†’</Link>
           </div>
           <div>
             {MOCK_ENTREGAS_HOJE.map((e, idx) => (
@@ -230,7 +232,7 @@ export default function DistDashboard() {
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLOR[e.status], flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--tanqe-black)' }}>{e.item}</div>
-                  <div style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: 12, color: 'var(--tanqe-gray)', marginTop: 2 }}>{e.destino} · {e.eta}</div>
+                  <div style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: 12, color: 'var(--tanqe-gray)', marginTop: 2 }}>{e.destino} Â· {e.eta}</div>
                 </div>
                 <button
                   style={{

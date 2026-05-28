@@ -1,5 +1,7 @@
-'use client'
+﻿'use client'
 
+
+export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -78,9 +80,9 @@ export default function LeiloesPostoPage() {
         }}
       >
         <div>
-          <p style={eyebrow}>{leiloes.length} LEILÕES · {ativos} ATIVOS · {contratados} CONTRATADOS</p>
-          <h1 style={title}>Meus leilões</h1>
-          <p style={subtitle}>Gerencie suas demandas de combustível e acompanhe lances em tempo real.</p>
+          <p style={eyebrow}>{leiloes.length} LEILÃ•ES Â· {ativos} ATIVOS Â· {contratados} CONTRATADOS</p>
+          <h1 style={title}>Meus leilÃµes</h1>
+          <p style={subtitle}>Gerencie suas demandas de combustÃ­vel e acompanhe lances em tempo real.</p>
         </div>
         <Link
           href="/posto/novo-leilao"
@@ -101,7 +103,7 @@ export default function LeiloesPostoPage() {
           }}
         >
           <Plus size={16} strokeWidth={2.5} />
-          Novo leilão
+          Novo leilÃ£o
         </Link>
       </div>
 
@@ -121,7 +123,7 @@ export default function LeiloesPostoPage() {
             color: 'var(--tanqe-gray)',
           }}
         >
-          Carregando…
+          Carregandoâ€¦
         </div>
       ) : leiloes.length === 0 ? (
         <div
@@ -156,7 +158,7 @@ export default function LeiloesPostoPage() {
               lineHeight: 1.6,
             }}
           >
-            Publique seu primeiro leilão e receba lances competitivos de distribuidoras em tempo real.
+            Publique seu primeiro leilÃ£o e receba lances competitivos de distribuidoras em tempo real.
           </p>
           <Link
             href="/posto/novo-leilao"
@@ -177,7 +179,7 @@ export default function LeiloesPostoPage() {
             }}
           >
             <Plus size={16} strokeWidth={2.5} />
-            Publicar primeiro leilão
+            Publicar primeiro leilÃ£o
           </Link>
         </div>
       ) : (
@@ -205,7 +207,7 @@ export default function LeiloesPostoPage() {
                     borderBottom: '1px solid var(--tanqe-stone)',
                   }}
                 >
-                  {['Combustível', 'Volume', 'Preço teto', 'Status', 'Criado em', ''].map((h) => (
+                  {['CombustÃ­vel', 'Volume', 'PreÃ§o teto', 'Status', 'Criado em', ''].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -258,7 +260,7 @@ export default function LeiloesPostoPage() {
                         </span>
                       </td>
                       <td style={{ padding: '14px 16px', color: 'var(--tanqe-gray)', fontSize: 13 }}>
-                        {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-BR') : '—'}
+                        {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-BR') : 'â€”'}
                       </td>
                       <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                         <Link
@@ -272,7 +274,7 @@ export default function LeiloesPostoPage() {
                             textDecoration: 'none',
                           }}
                         >
-                          Ver →
+                          Ver â†’
                         </Link>
                       </td>
                     </tr>

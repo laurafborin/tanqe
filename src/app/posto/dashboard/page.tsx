@@ -1,8 +1,10 @@
-'use client'
+﻿'use client'
 
+
+export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
+import dynamicImport from 'next/dynamic'
 import {
   LineChart,
   Line,
@@ -14,7 +16,7 @@ import {
 } from 'recharts'
 import { ChevronRight } from 'lucide-react'
 
-const MapView = dynamic(() => import('@/components/map/MapView'), {
+const MapView = dynamicImport(() => import('@/components/map/MapView'), {
   ssr: false,
   loading: () => (
     <div
@@ -32,7 +34,7 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
         color: 'var(--tanqe-gray)',
       }}
     >
-      Carregando mapa…
+      Carregando mapaâ€¦
     </div>
   ),
 })
@@ -42,21 +44,21 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
 // ============================================
 
 const MOCK_USER = {
-  postoLabel: 'POSTO BR-001 · SÃO PAULO/SP',
+  postoLabel: 'POSTO BR-001 Â· SÃƒO PAULO/SP',
   greeting: 'Bom dia, Posto Sol Nascente.',
-  subtitle: 'Você tem 2 leilões abertos e 3 entregas em andamento.',
+  subtitle: 'VocÃª tem 2 leilÃµes abertos e 3 entregas em andamento.',
 }
 
 const MOCK_METRICS = [
-  { label: 'ECONOMIA ESTE MÊS', value: 'R$ 12.847', trend: { sign: 'pos' as const, text: '+18,3%' }, subtitle: 'vs. preço médio ANP' },
-  { label: 'VOLUME NEGOCIADO', value: '84.500 L', trend: { sign: 'pos' as const, text: '+12,0%' }, subtitle: 'vs. mês anterior' },
-  { label: 'LEILÕES ATIVOS', value: '2', trend: null, subtitle: 'Encerram em até 24h' },
-  { label: 'SCORE DO POSTO', value: '4.8', star: true, trend: null, subtitle: '12 avaliações' },
+  { label: 'ECONOMIA ESTE MÃŠS', value: 'R$ 12.847', trend: { sign: 'pos' as const, text: '+18,3%' }, subtitle: 'vs. preÃ§o mÃ©dio ANP' },
+  { label: 'VOLUME NEGOCIADO', value: '84.500 L', trend: { sign: 'pos' as const, text: '+12,0%' }, subtitle: 'vs. mÃªs anterior' },
+  { label: 'LEILÃ•ES ATIVOS', value: '2', trend: null, subtitle: 'Encerram em atÃ© 24h' },
+  { label: 'SCORE DO POSTO', value: '4.8', star: true, trend: null, subtitle: '12 avaliaÃ§Ãµes' },
 ]
 
 const MOCK_LEILOES_ATIVOS = [
-  { id: 'lei_001', combustivel: 'GASOLINA C', volume: 30000, cidade: 'São Paulo, SP', precoRef: 5.82, precoAtual: 5.61, encerraEmHoras: 14, encerraEmMin: 32, progress: 70, lances: 3 },
-  { id: 'lei_002', combustivel: 'DIESEL S10', volume: 25000, cidade: 'São Paulo, SP', precoRef: 5.94, precoAtual: 5.78, encerraEmHoras: 6, encerraEmMin: 18, progress: 85, lances: 5 },
+  { id: 'lei_001', combustivel: 'GASOLINA C', volume: 30000, cidade: 'SÃ£o Paulo, SP', precoRef: 5.82, precoAtual: 5.61, encerraEmHoras: 14, encerraEmMin: 32, progress: 70, lances: 3 },
+  { id: 'lei_002', combustivel: 'DIESEL S10', volume: 25000, cidade: 'SÃ£o Paulo, SP', precoRef: 5.94, precoAtual: 5.78, encerraEmHoras: 6, encerraEmMin: 18, progress: 85, lances: 5 },
 ]
 
 const MOCK_ANP_DATA = Array.from({ length: 10 }, (_, i) => ({
@@ -69,8 +71,8 @@ const MOCK_ANP_DATA = Array.from({ length: 10 }, (_, i) => ({
 const MOCK_DISTRIBUIDORAS = [
   { id: 'dst_1', label: 'BR Petro SP', lat: -23.55, lng: -46.63, score: 4.8, subtitle: 'Grande SP' },
   { id: 'dst_2', label: 'Ipiranga RJ', lat: -22.91, lng: -43.21, score: 4.6, subtitle: 'Rio de Janeiro' },
-  { id: 'dst_3', label: 'Raízen Campinas', lat: -22.91, lng: -47.06, score: 4.9, subtitle: 'Interior SP' },
-  { id: 'dst_4', label: 'Shell Sorocaba', lat: -23.50, lng: -47.46, score: 4.4, subtitle: 'Sorocaba e região' },
+  { id: 'dst_3', label: 'RaÃ­zen Campinas', lat: -22.91, lng: -47.06, score: 4.9, subtitle: 'Interior SP' },
+  { id: 'dst_4', label: 'Shell Sorocaba', lat: -23.50, lng: -47.46, score: 4.4, subtitle: 'Sorocaba e regiÃ£o' },
   { id: 'dst_5', label: 'Petrobras Distr. SP', lat: -23.42, lng: -46.74, score: 4.7, subtitle: 'Capital' },
   { id: 'dst_6', label: 'Vibra ABC', lat: -23.66, lng: -46.53, score: 4.5, subtitle: 'ABC Paulista' },
   { id: 'dst_7', label: 'Atem Guarulhos', lat: -23.46, lng: -46.53, score: 4.3, subtitle: 'Guarulhos' },
@@ -78,10 +80,10 @@ const MOCK_DISTRIBUIDORAS = [
 ]
 
 const MOCK_ENTREGAS = [
-  { id: 'ent_1', status: 'em_transito' as const, item: 'Diesel S10 · 25.000 L', dist: 'BR Petro SP', when: 'há 2h' },
-  { id: 'ent_2', status: 'entregue' as const, item: 'Gasolina C · 18.000 L', dist: 'Raízen Campinas', when: 'há 6h' },
-  { id: 'ent_3', status: 'em_transito' as const, item: 'Etanol · 12.000 L', dist: 'Ipiranga RJ', when: 'há 8h' },
-  { id: 'ent_4', status: 'entregue' as const, item: 'Diesel S500 · 30.000 L', dist: 'Vibra ABC', when: 'ontem' },
+  { id: 'ent_1', status: 'em_transito' as const, item: 'Diesel S10 Â· 25.000 L', dist: 'BR Petro SP', when: 'hÃ¡ 2h' },
+  { id: 'ent_2', status: 'entregue' as const, item: 'Gasolina C Â· 18.000 L', dist: 'RaÃ­zen Campinas', when: 'hÃ¡ 6h' },
+  { id: 'ent_3', status: 'em_transito' as const, item: 'Etanol Â· 12.000 L', dist: 'Ipiranga RJ', when: 'hÃ¡ 8h' },
+  { id: 'ent_4', status: 'entregue' as const, item: 'Diesel S500 Â· 30.000 L', dist: 'Vibra ABC', when: 'ontem' },
 ]
 
 const STATUS_COLOR: Record<string, string> = {
@@ -206,7 +208,7 @@ export default function PostoDashboard() {
               }}
             >
               {m.value}
-              {m.star && <span style={{ color: 'var(--tanqe-orange)', marginLeft: 6 }}>★</span>}
+              {m.star && <span style={{ color: 'var(--tanqe-orange)', marginLeft: 6 }}>â˜…</span>}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
               {m.trend && (
@@ -238,7 +240,7 @@ export default function PostoDashboard() {
         ))}
       </div>
 
-      {/* LINHA 3: LEILÕES + ANP */}
+      {/* LINHA 3: LEILÃ•ES + ANP */}
       <div
         style={{
           display: 'grid',
@@ -249,8 +251,8 @@ export default function PostoDashboard() {
       >
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={cardTitle}>Leilões em andamento</h3>
-            <Link href="/posto/leiloes" style={sectionLink}>Ver todos →</Link>
+            <h3 style={cardTitle}>LeilÃµes em andamento</h3>
+            <Link href="/posto/leiloes" style={sectionLink}>Ver todos â†’</Link>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {MOCK_LEILOES_ATIVOS.map((l) => (
@@ -287,7 +289,7 @@ export default function PostoDashboard() {
                 </span>
                 <div>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--tanqe-black)' }}>
-                    {l.volume.toLocaleString('pt-BR')} L · {l.cidade}
+                    {l.volume.toLocaleString('pt-BR')} L Â· {l.cidade}
                   </div>
                   <div
                     style={{
@@ -302,7 +304,7 @@ export default function PostoDashboard() {
                     }}
                   >
                     <span style={{ textDecoration: 'line-through' }}>R$ {l.precoRef.toFixed(2)}/L</span>
-                    <span>→</span>
+                    <span>â†’</span>
                     <span
                       style={{
                         fontFamily: 'var(--font-display)',
@@ -350,8 +352,8 @@ export default function PostoDashboard() {
 
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={cardTitle}>Preço médio ANP</h3>
-            <span style={eyebrow}>ÚLTIMOS 10 DIAS</span>
+            <h3 style={cardTitle}>PreÃ§o mÃ©dio ANP</h3>
+            <span style={eyebrow}>ÃšLTIMOS 10 DIAS</span>
           </div>
           <div style={{ height: 240, opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -426,7 +428,7 @@ export default function PostoDashboard() {
       >
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={cardTitle}>Distribuidoras próximas</h3>
+            <h3 style={cardTitle}>Distribuidoras prÃ³ximas</h3>
             <span style={eyebrow}>8 PARCEIRAS</span>
           </div>
           <MapView center={[-23.55, -46.63]} zoom={9} markers={MOCK_DISTRIBUIDORAS} />
@@ -434,8 +436,8 @@ export default function PostoDashboard() {
 
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <h3 style={cardTitle}>Últimas entregas</h3>
-            <Link href="/posto/contratos" style={sectionLink}>Ver todas →</Link>
+            <h3 style={cardTitle}>Ãšltimas entregas</h3>
+            <Link href="/posto/contratos" style={sectionLink}>Ver todas â†’</Link>
           </div>
           <div>
             {MOCK_ENTREGAS.map((e, idx) => (
@@ -471,7 +473,7 @@ export default function PostoDashboard() {
                       marginTop: 2,
                     }}
                   >
-                    {e.dist} · {e.when}
+                    {e.dist} Â· {e.when}
                   </div>
                 </div>
                 <ChevronRight size={14} color="var(--tanqe-gray)" />
