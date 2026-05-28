@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/ui/Logo'
-import { loginAs, type Role } from '@/lib/auth'
+import { loginAs, loginByEmail, type Role } from '@/lib/auth'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -22,8 +22,9 @@ export default function LoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    const role: Role = email.toLowerCase().includes('distribuidora') ? 'distribuidora' : 'posto'
-    go(role)
+    setLoading(true)
+    const role = loginByEmail(email)
+    router.push(role === 'posto' ? '/posto/dashboard' : '/distribuidora/dashboard')
   }
 
   function fillDemo(role: Role) {

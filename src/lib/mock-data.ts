@@ -1067,7 +1067,40 @@ export const CERTIFICACOES_POSTO: Certificacao[] = [
   { id: 'crt_p2', nome: 'Alvará de funcionamento', emissor: 'Prefeitura de São Paulo', numero: 'ALV-2024-22-1187', emissaoIso: '2024-03-22', vencimentoIso: '2026-03-22', status: 'ativa' },
   { id: 'crt_p3', nome: 'Licença ambiental CETESB', emissor: 'CETESB', numero: 'CTS-2023-9011', emissaoIso: '2023-09-15', vencimentoIso: '2026-09-15', status: 'ativa' },
   { id: 'crt_p4', nome: 'Inspeção tanques (NR-20)', emissor: 'INMETRO', numero: 'NR20-2025-4421', emissaoIso: '2025-02-04', vencimentoIso: '2026-02-04', status: 'pendente' },
-  { id: 'crt_p5', nome: 'Corpo de Bombeiros', emissor: 'CBPMESP', numero: 'AVCB-2024-31889', emissaoIso: '2024-05-30', vencimentoIso: '2027-05-30', status: 'ativa' },
+  { id: 'crt_p5', nome: 'Corpo de Bombeiros (AVCB)', emissor: 'CBPMESP', numero: 'AVCB-2024-31889', emissaoIso: '2024-05-30', vencimentoIso: '2027-05-30', status: 'ativa' },
+  { id: 'crt_p6', nome: 'ISO 14001 — Gestão Ambiental', emissor: 'BSI Brasil', numero: 'ISO14001-2024-447', emissaoIso: '2024-08-12', vencimentoIso: '2027-08-12', status: 'ativa' },
+  { id: 'crt_p7', nome: 'PROCONVE — Emissões', emissor: 'IBAMA', numero: 'PRCV-2024-8821', emissaoIso: '2024-02-18', vencimentoIso: '2026-02-18', status: 'ativa' },
+  { id: 'crt_p8', nome: 'Selo Combustível Sustentável', emissor: 'União Brasileira do Biodiesel', numero: 'UBB-2025-1102', emissaoIso: '2025-01-30', vencimentoIso: '2026-01-30', status: 'ativa' },
+]
+
+// ============================================================
+// CONQUISTAS E RECONHECIMENTOS DO POSTO (vitrine)
+// ============================================================
+export interface Conquista {
+  id: string
+  titulo: string
+  detalhe: string
+  emissor: string
+  data: string
+  destaque?: boolean
+}
+
+export const CONQUISTAS_POSTO: Conquista[] = [
+  { id: 'cq_1', titulo: 'Top 3% em economia da Grande SP', detalhe: 'Melhor performance de negociação no 1º semestre de 2026', emissor: 'TANQE Insights', data: '2026-04-01', destaque: true },
+  { id: 'cq_2', titulo: 'Selo Posto Verificado', detalhe: 'Compliance regulatório completo + score acima de 4.5', emissor: 'TANQE Compliance', data: '2025-11-12' },
+  { id: 'cq_3', titulo: '100+ contratos sem inadimplência', detalhe: 'Histórico de pagamento perfeito em todas as operações', emissor: 'TANQE Risk', data: '2026-02-20' },
+  { id: 'cq_4', titulo: 'Pioneiro em leilão reverso digital', detalhe: 'Entre os primeiros 50 postos a aderir à plataforma', emissor: 'TANQE', data: '2024-09-01' },
+  { id: 'cq_5', titulo: 'Embaixador TANQE', detalhe: 'Convidado para o painel de feedback estratégico do produto', emissor: 'Diretoria TANQE', data: '2026-03-15' },
+]
+
+// Avaliações extras pra enriquecer a vitrine do perfil
+export const AVALIACOES_DESTAQUE_POSTO: Avaliacao[] = [
+  { id: 'av_des_1', avaliadorId: 'dst_001', avaliadoId: 'pst_001', contratoId: 'con_001', nota: 5, comentario: 'Operação impecável do início ao fim. Documentação enviada em minutos, pagamento na hora, equipe técnica receptiva. Posto referência em São Paulo.', criterios: { pontualidade: 5, qualidade: 5, comunicacao: 5 }, criadoEm: '2026-04-18T14:00:00Z' },
+  { id: 'av_des_2', avaliadorId: 'dst_003', avaliadoId: 'pst_001', contratoId: 'con_002', nota: 5, comentario: 'Comunicação muito clara. Recebemos confirmação de descarga com fotos. Fiscalização ANP foi tranquila pra ambas as partes. Vamos repetir mensalmente.', criterios: { pontualidade: 5, qualidade: 5, comunicacao: 5 }, criadoEm: '2026-03-22T10:30:00Z' },
+  { id: 'av_des_3', avaliadorId: 'dst_005', avaliadoId: 'pst_001', contratoId: 'con_003', nota: 5, comentario: 'Posto com infraestrutura de ponta. Cubagem feita por terceiro independente em todas as entregas. Profissionalismo de rede grande operando em independente.', criterios: { pontualidade: 5, qualidade: 5, comunicacao: 4 }, criadoEm: '2026-02-08T16:45:00Z' },
+  { id: 'av_des_4', avaliadorId: 'dst_006', avaliadoId: 'pst_001', contratoId: 'con_004', nota: 5, comentario: 'Sempre fecham na primeira oferta válida — não ficam empurrando preço pra baixo no pos-leilão. Postura comercial honesta, raro no mercado.', criterios: { pontualidade: 4, qualidade: 5, comunicacao: 5 }, criadoEm: '2026-01-30T09:15:00Z' },
+  { id: 'av_des_5', avaliadorId: 'dst_002', avaliadoId: 'pst_001', contratoId: 'con_005', nota: 5, comentario: 'Volume mensal consistente e previsível. Excelente parceria de longo prazo. Posto recomendado para distribuidoras que buscam carteira estável.', criterios: { pontualidade: 5, qualidade: 5, comunicacao: 5 }, criadoEm: '2025-12-12T11:00:00Z' },
+  { id: 'av_des_6', avaliadorId: 'dst_008', avaliadoId: 'pst_001', contratoId: 'con_006', nota: 4, comentario: 'Boa experiência. Pequeno ajuste de janela de descarga no início, resolvido por telefone em 5 minutos. Operação fluida.', criterios: { pontualidade: 4, qualidade: 5, comunicacao: 5 }, criadoEm: '2025-11-28T13:20:00Z' },
 ]
 
 export const CERTIFICACOES_DIST: Certificacao[] = [

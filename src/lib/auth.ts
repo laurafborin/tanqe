@@ -12,10 +12,27 @@ const PERFIS: Record<Role, { email: string; nome: string }> = {
   distribuidora: { email: 'distribuidora@tanqe.com.br', nome: 'BR Petro SP' },
 }
 
-export function loginAs(role: Role) {
+// Reconhecimento de emails específicos pra personalizar nome no app
+const SPECIAL_EMAILS: Record<string, { role: Role; nome: string }> = {
+  'mariomdotta@gmail.com': { role: 'posto', nome: 'Mario Motta · Posto Sol Nascente' },
+}
+
+export function loginAs(role: Role, customNome?: string) {
   if (typeof window === 'undefined') return
   localStorage.setItem(STORAGE_KEY, role)
-  localStorage.setItem(NAME_KEY, PERFIS[role].nome)
+  localStorage.setItem(NAME_KEY, customNome ?? PERFIS[role].nome)
+}
+
+export function loginByEmail(email: string): Role {
+  const norm = email.trim().toLowerCase()
+  const special = SPECIAL_EMAILS[norm]
+  if (special) {
+    loginAs(special.role, special.nome)
+    return special.role
+  }
+  const role: Role = norm.includes('distribuidora') ? 'distribuidora' : 'posto'
+  loginAs(role)
+  return role
 }
 
 export function getRole(): Role | null {
