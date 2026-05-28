@@ -1,162 +1,259 @@
-﻿'use client'
-
+'use client'
 
 export const dynamic = 'force-dynamic'
-import { useEffect, useState } from 'react'
-import { use } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { Leilao, Lance } from '@/lib/types'
-import Countdown from '@/components/ui/Countdown'
-import StatusBadge from '@/components/ui/StatusBadge'
-import Stars from '@/components/ui/Stars'
-import MiniMap from '@/components/map/MiniMap'
+
+import { use, useEffect, useMemo, useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { CheckCircle, Zap } from 'lucide-react'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { Card } from '@/components/ui/Card'
+import { Badge, type BadgeVariant } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Avatar } from '@/components/ui/Avatar'
+import {
+  DISTRIBUIDORAS,
+  getLeilao,
+  getDist,
+  getContratoByLeilao,
+  type Lance,
+  type LeilaoStatus,
+} from '@/lib/mock-data'
+import { formatBRL, formatLitros, formatPrecoLitro, formatCountdown, timeAgo, formatPctRaw } from '@/lib/format'
 
-export default function LeilaoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
+const STATUS_VARIANT: Record<LeilaoStatus, BadgeVariant> = {
+  aberto: 'aberto',
+  aguardando_pagamento: 'pendente',
+  em_entrega: 'destaque',
+  concluido: 'concluido',
+  cancelado: 'cancelado',
+}
+const STATUS_LABEL: Record<LeilaoStatus, string> = {
+  aberto: 'Aberto',
+  aguardando_pagamento: 'Aguardando pgto',
+  em_entrega: 'Em entrega',
+  concluido: 'Concluído',
+  cancelado: 'Cancelado',
+}
+
+export default function LeilaoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const [leilao, setLeilao] = useState<Leilao | null>(null)
-  const [lances, setLances] = useState<Lance[]>([])
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const router = useRouter()
+  const leilaoOriginal = getLeilao(id)
+  const [lances, setLances] = useState<Lance[]>(leilaoOriginal?.lances ?? [])
+  const [countdown, setCountdown] = useState('')
+  const [status, setStatus] = useState<LeilaoStatus>(leilaoOriginal?.status ?? 'aberto')
+  const [showToast, setShowToast] = useState<string | null>(null)
+  const [newLanceId, setNewLanceId] = useState<string | null>(null)
+  const [accepting, setAccepting] = useState(false)
+  const toastTimer = useRef<NodeJS.Timeout | null>(null)
 
+  // countdown
   useEffect(() => {
-    async function load() {
-      const { data: l } = await supabase.from('leiloes').select('*').eq('id', id).single()
-      setLeilao(l)
-      const { data: lc } = await supabase
-        .from('lances')
-        .select('*, distribuidora:profiles!lances_dist_id_fkey(*)')
-        .eq('leilao_id', id)
-        .order('preco', { ascending: true })
-      setLances(lc || [])
-      setLoading(false)
-    }
-    load()
-    const channel = supabase
-      .channel(`lances-${id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lances', filter: `leilao_id=eq.${id}` }, (payload) => {
-        setLances(prev => [...prev, payload.new as Lance].sort((a, b) => a.preco - b.preco))
-      })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [id])
+    if (!leilaoOriginal || status !== 'aberto') return
+    const tick = () => setCountdown(formatCountdown(leilaoOriginal.endsAt))
+    tick()
+    const t = setInterval(tick, 1000)
+    return () => clearInterval(t)
+  }, [leilaoOriginal, status])
 
-  async function aceitarLance(lance: Lance) {
-    if (!leilao) return
-    const valor = lance.preco * leilao.volume
-    await supabase.from('contratos').insert({
-      leilao_id: leilao.id, lance_id: lance.id, posto_id: leilao.posto_id, dist_id: lance.dist_id, valor, status: 'pendente_assinatura',
-    })
-    await supabase.from('leiloes').update({ status: 'contratado' }).eq('id', leilao.id)
-    setLeilao(prev => prev ? { ...prev, status: 'contratado' } : null)
-    alert('Proposta aceita! Contrato gerado.')
+  // live bid simulation
+  useEffect(() => {
+    if (!leilaoOriginal || status !== 'aberto') return
+    let timer: NodeJS.Timeout
+    const schedule = () => {
+      const delay = (7 + Math.random() * 6) * 1000
+      timer = setTimeout(() => {
+        setLances((prev) => {
+          if (prev.length === 0) return prev
+          const sorted = [...prev].sort((a, b) => a.precoLitro - b.precoLitro)
+          const melhor = sorted[0]
+          const queda = 0.005 + Math.random() * 0.012
+          const novoPreco = Number((melhor.precoLitro * (1 - queda)).toFixed(3))
+          const distrIds = DISTRIBUIDORAS.map((d) => d.id).filter((dId) => dId !== melhor.distId)
+          const distId = distrIds[Math.floor(Math.random() * distrIds.length)] ?? DISTRIBUIDORAS[0].id
+          const dist = getDist(distId)
+          const novoLance: Lance = {
+            id: `${id}_live_${Date.now()}`,
+            leilaoId: id,
+            distId,
+            precoLitro: novoPreco,
+            prazoEntrega: melhor.prazoEntrega,
+            timestamp: new Date().toISOString(),
+            observacoes: 'Lance ao vivo',
+          }
+          setNewLanceId(novoLance.id)
+          setShowToast(`Novo lance: ${dist?.nome ?? '—'} · ${formatPrecoLitro(novoPreco)}`)
+          if (toastTimer.current) clearTimeout(toastTimer.current)
+          toastTimer.current = setTimeout(() => setShowToast(null), 3000)
+          return [...prev, novoLance]
+        })
+        schedule()
+      }, delay)
+    }
+    schedule()
+    return () => {
+      if (timer) clearTimeout(timer)
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+    }
+  }, [id, leilaoOriginal, status])
+
+  const lancesOrdenados = useMemo(() => [...lances].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), [lances])
+  const sortedByPrice = useMemo(() => [...lances].sort((a, b) => a.precoLitro - b.precoLitro), [lances])
+  const melhor = sortedByPrice[0]
+  const melhorDist = melhor ? getDist(melhor.distId) : undefined
+  const economiaProjetada = leilaoOriginal && melhor ? (leilaoOriginal.precoTeto - melhor.precoLitro) * leilaoOriginal.volume : 0
+  const economiaPct = leilaoOriginal && melhor ? ((leilaoOriginal.precoTeto - melhor.precoLitro) / leilaoOriginal.precoTeto) * 100 : 0
+
+  if (!leilaoOriginal) {
+    return (
+      <div style={{ padding: 32 }}>
+        <Card><p style={{ fontFamily: 'var(--font-body)', color: 'var(--tanqe-gray)' }}>Leilão não encontrado.</p></Card>
+      </div>
+    )
   }
 
-  if (loading) return <div className="space-y-4">{[1,2,3].map(i=><div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse"/>)}</div>
-  if (!leilao) return <p className="text-gray-400">Leilao nao encontrado</p>
+  const handleAccept = () => {
+    setAccepting(true)
+    setTimeout(() => {
+      setStatus('aguardando_pagamento')
+      setAccepting(false)
+      setShowToast(`Lance aceito! Contrato com ${melhorDist?.nome} em geração.`)
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+      toastTimer.current = setTimeout(() => setShowToast(null), 4000)
+    }, 600)
+  }
 
-  const mapPoints = lances.filter(l => l.distribuidora).map(l => ({ lat: l.distribuidora!.lat, lng: l.distribuidora!.lng, nome: l.distribuidora!.nome }))
+  const contrato = getContratoByLeilao(id)
 
   return (
-    <div>
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-400 mb-1">
-        <Link href="/posto/dashboard" className="hover:text-[#E8621A]">Dashboard</Link>
-        <span className="mx-1.5 text-gray-300">/</span>
-        <span className="text-gray-700 font-medium">{leilao.combustivel}</span>
-      </div>
-
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{leilao.combustivel}</h1>
-          <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <StatusBadge status={leilao.status} />
-            <span className="text-sm text-gray-400">{lances.length} proposta{lances.length !== 1 ? 's' : ''}</span>
-          </div>
-        </div>
-        {leilao.status === 'aberto' && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center min-w-[180px]">
-            <p className="text-[10px] uppercase tracking-widest text-gray-400">Tempo Restante</p>
-            <div className="mt-1"><Countdown endDate={leilao.deadline} /></div>
-          </div>
-        )}
-      </div>
-
-      {/* Info Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: 'Volume', value: `${leilao.volume?.toLocaleString()} L`, sub: 'litros' },
-          { label: 'Preco Teto', value: `R$ ${leilao.preco_teto?.toFixed(2)}/L`, sub: 'valor maximo' },
-          { label: 'Prazo Entrega', value: `${leilao.prazo_entrega} dias`, sub: 'uteis' },
-          { label: 'Pagamento', value: leilao.forma_pagamento, sub: leilao.regiao },
-        ].map(info => (
-          <div key={info.label} className="bg-white rounded-xl border border-gray-100 p-4">
-            <p className="text-[10px] uppercase tracking-widest text-gray-400">{info.label}</p>
-            <p className="text-xl font-bold text-gray-900 mt-1">{info.value}</p>
-            <p className="text-xs text-gray-400">{info.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Map */}
-      {mapPoints.length > 0 && <div className="mb-8"><MiniMap points={mapPoints} /></div>}
-
-      {/* Lances */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Propostas Recebidas</h2>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs text-gray-400">AtualizaÃ§Ã£o em tempo real</span>
-        </div>
-      </div>
-
-      {lances.length === 0 ? (
-        <div className="flex flex-col items-center py-20 bg-white rounded-2xl border border-gray-100">
-          <svg width="48" height="48" className="text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <p className="text-lg font-medium text-gray-400 mt-4">Aguardando propostas</p>
-          <p className="text-sm text-gray-300">Distribuidoras podem enviar propostas enquanto o leilao estiver aberto</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {lances.map((lance, i) => (
-            <div key={lance.id} className={`bg-white rounded-2xl border p-5 transition-all hover:shadow-md ${i === 0 ? 'border-[#E8621A]/30 shadow-sm' : 'border-gray-100'}`}>
-              <div className="flex items-center gap-4">
-                {/* Position */}
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${i === 0 ? 'bg-[#E8621A] text-white' : 'bg-gray-100 text-gray-500'}`}>
-                  {i + 1}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-gray-900">{lance.distribuidora?.nome || 'Distribuidora'}</p>
-                    {i === 0 && <span className="bg-green-50 text-green-700 border border-green-200 text-[10px] font-semibold px-2 py-0.5 rounded-full">Melhor Oferta</span>}
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {lance.distribuidora?.score && <><Stars rating={lance.distribuidora.score} /><span className="text-xs text-gray-400">{lance.distribuidora.score.toFixed(1)}</span></>}
-                  </div>
-                  <div className="flex gap-4 mt-1">
-                    <span className="text-xs text-gray-400">Prazo: {lance.prazo} dias</span>
-                    {lance.observacoes && <span className="text-xs text-gray-400">{lance.observacoes}</span>}
-                  </div>
-                </div>
-
-                {/* Price + Action */}
-                <div className="text-right flex-shrink-0">
-                  <p className={`text-2xl font-bold ${i === 0 ? 'text-[#E8621A]' : 'text-gray-900'}`}>R$ {lance.preco?.toFixed(3)}</p>
-                  <p className="text-xs text-gray-400">Total: R$ {(lance.preco * leilao.volume).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                  {leilao.status === 'aberto' && i === 0 && (
-                    <button onClick={() => aceitarLance(lance)} className="mt-2 bg-[#E8621A] text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-[#C44E10] transition-colors">
-                      Aceitar Proposta
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+    <div style={{ display: 'grid', gap: 24, position: 'relative' }}>
+      {showToast && (
+        <div style={{
+          position: 'fixed', top: 24, right: 24, zIndex: 100, padding: '14px 20px',
+          background: 'var(--tanqe-charcoal)', color: 'var(--tanqe-white)', borderRadius: 4,
+          border: '1px solid rgba(232,88,26,0.3)', fontFamily: 'var(--font-body)', fontSize: 13,
+          boxShadow: 'var(--shadow-lg)', display: 'flex', alignItems: 'center', gap: 10, maxWidth: 380,
+          animation: 'tanqe-slide 0.3s var(--ease-out)',
+        }}>
+          <Zap size={16} color="var(--tanqe-orange)" /> {showToast}
         </div>
       )}
+      <style>{`@keyframes tanqe-slide { from { transform: translateY(-12px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }`}</style>
+      <style>{`@keyframes tanqe-newrow { 0% { background: rgba(232,88,26,0.18); transform: translateY(-4px); opacity: 0 } 100% { background: transparent; transform: translateY(0); opacity: 1 } }`}</style>
+
+      <Link href="/posto/leiloes" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', textDecoration: 'none' }}>← Voltar pra leilões</Link>
+
+      <SectionHeader
+        eyebrow={`${leilaoOriginal.codigo} · ${leilaoOriginal.regiao}`}
+        title={`${leilaoOriginal.combustivel} · ${formatLitros(leilaoOriginal.volume)}`}
+        subtitle={status === 'aberto' ? 'Distribuidoras competindo em tempo real. O melhor preço vence.' : 'Detalhe do leilão e histórico de lances.'}
+        action={<Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>}
+      />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 24 }} className="lei-row">
+        <div style={{ display: 'grid', gap: 24 }}>
+          {/* Countdown */}
+          <Card>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 12 }}>
+              {status === 'aberto' ? 'Encerra em' : 'Encerrado'}
+            </p>
+            <div style={{
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 600,
+              fontSize: 64,
+              color: status === 'aberto' ? 'var(--tanqe-orange)' : 'var(--tanqe-gray)',
+              letterSpacing: '-0.02em',
+              lineHeight: 1,
+            }}>
+              {status === 'aberto' ? countdown || formatCountdown(leilaoOriginal.endsAt) : '—'}
+            </div>
+          </Card>
+
+          {/* Lances */}
+          <Card title="Lances recebidos" eyebrow={`${lances.length} ofertas · melhor: ${melhor ? formatPrecoLitro(melhor.precoLitro) : '—'}`}>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {lancesOrdenados.map((l, i) => {
+                const d = getDist(l.distId)
+                const isBest = melhor && l.id === melhor.id
+                const isNew = l.id === newLanceId
+                const prevPrice = sortedByPrice.find((x) => x.id === l.id) ? sortedByPrice[Math.max(0, sortedByPrice.findIndex((x) => x.id === l.id) - 1)] : undefined
+                const variacao = prevPrice && prevPrice.id !== l.id ? ((prevPrice.precoLitro - l.precoLitro) / prevPrice.precoLitro) * 100 : null
+                return (
+                  <div
+                    key={l.id}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'auto 1fr auto auto',
+                      gap: 14,
+                      alignItems: 'center',
+                      padding: 14,
+                      border: isBest ? '1px solid var(--tanqe-orange)' : '1px solid var(--tanqe-stone)',
+                      borderRadius: 4,
+                      background: isBest ? 'var(--tanqe-orange-pale)' : 'var(--tanqe-white)',
+                      animation: isNew ? 'tanqe-newrow 0.7s var(--ease-out)' : undefined,
+                    }}
+                  >
+                    <Avatar name={d?.nome || '?'} size={36} />
+                    <div>
+                      <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, margin: 0 }}>{d?.nome}</p>
+                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)', margin: 0, marginTop: 2 }}>
+                        {timeAgo(l.timestamp)} · prazo {l.prazoEntrega}d{l.observacoes ? ` · ${l.observacoes}` : ''}
+                      </p>
+                    </div>
+                    {variacao !== null && variacao > 0 && (
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '2px 8px', borderRadius: 2, background: 'var(--status-success-bg)', color: 'var(--status-success-fg)' }}>
+                        {formatPctRaw(variacao, 1)} ▼
+                      </span>
+                    )}
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 16, color: isBest ? 'var(--tanqe-orange-deep)' : 'var(--tanqe-black)', margin: 0 }}>{formatPrecoLitro(l.precoLitro)}</p>
+                      {isBest && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-orange-deep)', margin: 0, marginTop: 2 }}>melhor lance</p>}
+                    </div>
+                  </div>
+                )
+              })}
+              {lances.length === 0 && <p style={{ color: 'var(--tanqe-gray)', textAlign: 'center', padding: 24 }}>Nenhum lance ainda.</p>}
+            </div>
+          </Card>
+        </div>
+
+        <div style={{ display: 'grid', gap: 24, alignContent: 'flex-start' }}>
+          <Card eyebrow="Resumo do leilão" title="Detalhes">
+            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', rowGap: 12, columnGap: 16, fontFamily: 'var(--font-body)', fontSize: 13 }}>
+              <span style={{ color: 'var(--tanqe-gray)' }}>Preço-teto</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{formatPrecoLitro(leilaoOriginal.precoTeto)}</span>
+              <span style={{ color: 'var(--tanqe-gray)' }}>Melhor lance</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--tanqe-orange)' }}>{melhor ? formatPrecoLitro(melhor.precoLitro) : '—'}</span>
+              <span style={{ color: 'var(--tanqe-gray)' }}>Volume</span>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>{formatLitros(leilaoOriginal.volume)}</span>
+              <span style={{ color: 'var(--tanqe-gray)' }}>Pagamento</span>
+              <span>{leilaoOriginal.formaPagamento}</span>
+              <span style={{ color: 'var(--tanqe-gray)' }}>Região</span>
+              <span>{leilaoOriginal.regiao}</span>
+            </div>
+          </Card>
+          <Card eyebrow="Economia projetada" title="Versus seu teto">
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 36, color: 'var(--tanqe-orange)', letterSpacing: '-0.02em', lineHeight: 1 }}>
+              {formatBRL(economiaProjetada)}
+            </div>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', marginTop: 8 }}>
+              {formatPctRaw(economiaPct, 1, true)} abaixo do teto
+            </p>
+          </Card>
+          {status === 'aberto' && melhor && (
+            <Button onClick={handleAccept} size="lg" fullWidth disabled={accepting}>
+              {accepting ? 'Processando…' : `Aceitar ${formatPrecoLitro(melhor.precoLitro)} →`}
+            </Button>
+          )}
+          {(status === 'aguardando_pagamento' || status === 'em_entrega' || status === 'concluido') && contrato && (
+            <Button href={`/posto/contrato/${contrato.id}`} size="lg" fullWidth variant="secondary" icon={CheckCircle}>
+              Ver contrato gerado
+            </Button>
+          )}
+        </div>
+      </div>
+      <style>{`@media (max-width: 1023px) { .lei-row { grid-template-columns: 1fr !important; } }`}</style>
     </div>
   )
 }

@@ -1,64 +1,99 @@
-﻿'use client'
-
+'use client'
 
 export const dynamic = 'force-dynamic'
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { Leilao } from '@/lib/types'
-import Countdown from '@/components/ui/Countdown'
-import StatusBadge from '@/components/ui/StatusBadge'
-import Link from 'next/link'
 
-export default function LeiloesDistribuidoraPage() {
-  const [leiloes, setLeiloes] = useState<Leilao[]>([])
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { Card } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import {
+  leiloesAbertos,
+  getPosto,
+  melhorLance,
+  type Combustivel,
+} from '@/lib/mock-data'
+import { formatLitros, formatPrecoLitro, formatCountdown } from '@/lib/format'
 
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase
-        .from('leiloes')
-        .select('*, posto:profiles(*)')
-        .eq('status', 'aberto')
-        .order('created_at', { ascending: false })
-      setLeiloes(data || [])
-      setLoading(false)
-    }
-    load()
-  }, [])
+const COMBUSTIVEIS: Combustivel[] = ['Gasolina Comum', 'Gasolina Aditivada', 'Etanol Hidratado', 'Diesel S-10', 'Diesel S-500']
 
-  if (loading) return <p className="text-gray-500">Carregando...</p>
+export default function OportunidadesPage() {
+  const router = useRouter()
+  const [filter, setFilter] = useState<Combustivel | 'todos'>('todos')
+  const all = useMemo(() => leiloesAbertos(), [])
+  const filtered = useMemo(() => (filter === 'todos' ? all : all.filter((l) => l.combustivel === filter)), [all, filter])
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Todos os Leiloes Abertos</h1>
-      {leiloes.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
-          <p className="text-gray-500">Nenhum leilao aberto no momento</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {leiloes.map((l) => (
-            <div key={l.id} className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-3">
+    <div style={{ display: 'grid', gap: 24 }}>
+      <SectionHeader
+        eyebrow={`${all.length} oportunidades abertas agora`}
+        title="Oportunidades"
+        subtitle="Demanda qualificada de postos esperando seu lance. Quem oferece o melhor preço vence."
+      />
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button onClick={() => setFilter('todos')} style={chipStyle(filter === 'todos')}>Todos ({all.length})</button>
+        {COMBUSTIVEIS.map((c) => {
+          const count = all.filter((l) => l.combustivel === c).length
+          if (count === 0) return null
+          return <button key={c} onClick={() => setFilter(c)} style={chipStyle(filter === c)}>{c} ({count})</button>
+        })}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+        {filtered.map((l) => {
+          const ml = melhorLance(l)
+          const posto = getPosto(l.postoId)
+          return (
+            <Card key={l.id} padding={20} hoverable>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Badge variant="aberto">{l.combustivel}</Badge>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)' }}>{l.codigo}</span>
+              </div>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--tanqe-black)', margin: 0 }}>{formatLitros(l.volume)}</h3>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--tanqe-gray)', margin: '4px 0 16px' }}>{posto?.nome} · {posto?.cidade}/{posto?.uf}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '12px 0', borderTop: '1px solid var(--tanqe-stone)', borderBottom: '1px solid var(--tanqe-stone)' }}>
                 <div>
-                  <h3 className="font-semibold">{l.combustivel}</h3>
-                  <p className="text-xs text-gray-500">{l.posto?.nome} - {l.regiao}</p>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', margin: 0 }}>Preço atual</p>
+                  <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--tanqe-orange)', margin: 0, letterSpacing: '-0.01em' }}>
+                    {formatPrecoLitro(ml?.precoLitro ?? l.precoAtual)}
+                  </p>
                 </div>
-                <StatusBadge status={l.status} />
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', margin: 0 }}>Encerra em</p>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 14, color: 'var(--tanqe-black)', margin: 0 }}>{formatCountdown(l.endsAt)}</p>
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-sm mb-4">
-                <div><span className="text-gray-500 text-xs">Volume</span><p className="font-medium">{l.volume?.toLocaleString()}L</p></div>
-                <div><span className="text-gray-500 text-xs">Teto</span><p className="font-medium">R$ {l.preco_teto?.toFixed(2)}</p></div>
-                <div><span className="text-gray-500 text-xs">Tempo</span><p><Countdown endDate={l.deadline} /></p></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)', margin: 0 }}>{l.lances.length} {l.lances.length === 1 ? 'lance' : 'lances'} · {l.formaPagamento}</p>
+                <Button size="sm" onClick={() => router.push(`/distribuidora/leilao/${l.id}`)}>Dar lance →</Button>
               </div>
-              <Link href={`/distribuidora/leilao/${l.id}`} className="block text-center py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand-dark">
-                Dar Lance
-              </Link>
-            </div>
-          ))}
-        </div>
-      )}
+            </Card>
+          )
+        })}
+        {filtered.length === 0 && (
+          <Card>
+            <p style={{ textAlign: 'center', color: 'var(--tanqe-gray)', padding: 32 }}>Nenhuma oportunidade neste filtro.</p>
+          </Card>
+        )}
+      </div>
     </div>
   )
+}
+
+function chipStyle(active: boolean): React.CSSProperties {
+  return {
+    background: active ? 'var(--tanqe-orange)' : 'var(--tanqe-white)',
+    color: active ? 'var(--tanqe-white)' : 'var(--tanqe-gray)',
+    border: active ? '1px solid var(--tanqe-orange)' : '1px solid var(--tanqe-stone)',
+    padding: '8px 14px',
+    borderRadius: 100,
+    fontFamily: 'var(--font-mono)',
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: '0.1em',
+    cursor: 'pointer',
+    transition: 'all var(--dur-fast) var(--ease-out)',
+  }
 }

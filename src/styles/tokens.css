@@ -16,12 +16,43 @@
   --tanqe-cream: #F7F5F1;
   --tanqe-white: #FFFFFF;
 
-  /* Status */
+  /* Superfícies dark (camadas) */
+  --surface-1: #0F0F0E;
+  --surface-2: #161514;
+  --surface-3: #1C1B19;
+  --surface-4: #252320;
+  --border-dark: rgba(255, 255, 255, 0.06);
+  --border-dark-strong: rgba(255, 255, 255, 0.10);
+
+  /* Sombras (suaves, monocromáticas — nunca coloridas) */
+  --shadow-sm: 0 1px 2px rgba(15, 15, 14, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 15, 14, 0.06), 0 1px 3px rgba(15, 15, 14, 0.04);
+  --shadow-lg: 0 12px 32px rgba(15, 15, 14, 0.10), 0 4px 8px rgba(15, 15, 14, 0.05);
+  --shadow-xl: 0 24px 64px rgba(15, 15, 14, 0.14), 0 8px 16px rgba(15, 15, 14, 0.06);
+
+  /* Gradientes de marca */
+  --gradient-orange: linear-gradient(135deg, #E8581A 0%, #C23F06 100%);
+  --gradient-orange-soft: linear-gradient(135deg, rgba(232,88,26,0.12) 0%, rgba(194,63,6,0.08) 100%);
+  --gradient-hero: radial-gradient(ellipse at top, rgba(232, 88, 26, 0.18) 0%, transparent 60%);
+  --gradient-mesh:
+    radial-gradient(at 20% 20%, rgba(232, 88, 26, 0.15) 0%, transparent 50%),
+    radial-gradient(at 80% 30%, rgba(244, 135, 74, 0.10) 0%, transparent 50%),
+    radial-gradient(at 50% 80%, rgba(232, 88, 26, 0.08) 0%, transparent 50%);
+
+  /* Status semânticos com bg/fg pra badges */
   --tanqe-success: #2E7D32;
   --tanqe-warning: #D4831A;
   --tanqe-danger: #C23F06;
+  --status-success-bg: #E8F5E9;
+  --status-success-fg: #2E7D32;
+  --status-warning-bg: #FFF4E5;
+  --status-warning-fg: #D4831A;
+  --status-danger-bg: #FFE5E5;
+  --status-danger-fg: #C23F06;
+  --status-info-bg: #E3F2FD;
+  --status-info-fg: #1976D2;
 
-  /* Tipografia (usa fallbacks do system até next/font carregar) */
+  /* Tipografia (usa fallbacks até next/font carregar) */
   --font-display: var(--font-display-loaded), 'Syne', sans-serif;
   --font-body: var(--font-body-loaded), 'DM Sans', sans-serif;
   --font-mono: var(--font-mono-loaded), 'DM Mono', monospace;
@@ -41,4 +72,10 @@
   --radius-md: 4px;
   --radius-lg: 8px;
   --radius-xl: 12px;
+
+  /* Easing / timing */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 400ms;
 }

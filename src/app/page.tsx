@@ -466,11 +466,7 @@ export default function LandingPage() {
               textAlign: 'right',
             }}
           >
-            © 2025 TANQE · Todos os direitos reservados
-            <br />
-            TCC FGV-EAESP 2025
-            <br />
-            Laura Ferreira Borin · Isabela Peres P. H. Garcia · Letícia Gabriel F. Dias
+            © 2026 TANQE · Todos os direitos reservados
           </div>
         </div>
       </footer>

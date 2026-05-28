@@ -1,493 +1,214 @@
-﻿'use client'
-
+'use client'
 
 export const dynamic = 'force-dynamic'
-import { useState, useEffect } from 'react'
+
+import { useMemo } from 'react'
 import Link from 'next/link'
 import dynamicImport from 'next/dynamic'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
 import { ChevronRight } from 'lucide-react'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { StatCard } from '@/components/ui/StatCard'
+import { Card } from '@/components/ui/Card'
+import { Badge, type BadgeVariant } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { LineChartTanqe } from '@/components/charts/LineChartTanqe'
+import { BarChartTanqe } from '@/components/charts/BarChartTanqe'
+import { PieChartTanqe } from '@/components/charts/PieChartTanqe'
+import {
+  LEILOES,
+  POSTOS,
+  DISTRIBUIDORAS,
+  POSTO_LOGADO_ID,
+  ANP_30D,
+  ECONOMIA_12M,
+  SPLIT_COMBUSTIVEL_POSTO,
+  pedidosByPosto,
+  getDist,
+  getPosto,
+  melhorLance,
+  type PedidoStatus,
+} from '@/lib/mock-data'
+import { formatBRL, formatLitros, formatPrecoLitro, formatCountdown, timeAgo } from '@/lib/format'
 
 const MapView = dynamicImport(() => import('@/components/map/MapView'), {
   ssr: false,
   loading: () => (
-    <div
-      style={{
-        height: 320,
-        background: 'var(--tanqe-stone)',
-        borderRadius: 4,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: 'var(--font-mono)',
-        fontSize: 11,
-        letterSpacing: '0.15em',
-        textTransform: 'uppercase',
-        color: 'var(--tanqe-gray)',
-      }}
-    >
-      Carregando mapaâ€¦
+    <div style={{ height: 320, background: 'var(--tanqe-stone)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--tanqe-gray)' }}>
+      Carregando mapa…
     </div>
   ),
 })
 
-// ============================================
-// MOCK DATA
-// ============================================
-
-const MOCK_USER = {
-  postoLabel: 'POSTO BR-001 Â· SÃƒO PAULO/SP',
-  greeting: 'Bom dia, Posto Sol Nascente.',
-  subtitle: 'VocÃª tem 2 leilÃµes abertos e 3 entregas em andamento.',
-}
-
-const MOCK_METRICS = [
-  { label: 'ECONOMIA ESTE MÃŠS', value: 'R$ 12.847', trend: { sign: 'pos' as const, text: '+18,3%' }, subtitle: 'vs. preÃ§o mÃ©dio ANP' },
-  { label: 'VOLUME NEGOCIADO', value: '84.500 L', trend: { sign: 'pos' as const, text: '+12,0%' }, subtitle: 'vs. mÃªs anterior' },
-  { label: 'LEILÃ•ES ATIVOS', value: '2', trend: null, subtitle: 'Encerram em atÃ© 24h' },
-  { label: 'SCORE DO POSTO', value: '4.8', star: true, trend: null, subtitle: '12 avaliaÃ§Ãµes' },
-]
-
-const MOCK_LEILOES_ATIVOS = [
-  { id: 'lei_001', combustivel: 'GASOLINA C', volume: 30000, cidade: 'SÃ£o Paulo, SP', precoRef: 5.82, precoAtual: 5.61, encerraEmHoras: 14, encerraEmMin: 32, progress: 70, lances: 3 },
-  { id: 'lei_002', combustivel: 'DIESEL S10', volume: 25000, cidade: 'SÃ£o Paulo, SP', precoRef: 5.94, precoAtual: 5.78, encerraEmHoras: 6, encerraEmMin: 18, progress: 85, lances: 5 },
-]
-
-const MOCK_ANP_DATA = Array.from({ length: 10 }, (_, i) => ({
-  dia: `D-${9 - i}`,
-  gasolina: 5.78 + Math.sin(i) * 0.08,
-  etanol: 3.92 + Math.cos(i) * 0.06,
-  diesel: 5.91 + Math.sin(i * 0.7) * 0.07,
-}))
-
-const MOCK_DISTRIBUIDORAS = [
-  { id: 'dst_1', label: 'BR Petro SP', lat: -23.55, lng: -46.63, score: 4.8, subtitle: 'Grande SP' },
-  { id: 'dst_2', label: 'Ipiranga RJ', lat: -22.91, lng: -43.21, score: 4.6, subtitle: 'Rio de Janeiro' },
-  { id: 'dst_3', label: 'RaÃ­zen Campinas', lat: -22.91, lng: -47.06, score: 4.9, subtitle: 'Interior SP' },
-  { id: 'dst_4', label: 'Shell Sorocaba', lat: -23.50, lng: -47.46, score: 4.4, subtitle: 'Sorocaba e regiÃ£o' },
-  { id: 'dst_5', label: 'Petrobras Distr. SP', lat: -23.42, lng: -46.74, score: 4.7, subtitle: 'Capital' },
-  { id: 'dst_6', label: 'Vibra ABC', lat: -23.66, lng: -46.53, score: 4.5, subtitle: 'ABC Paulista' },
-  { id: 'dst_7', label: 'Atem Guarulhos', lat: -23.46, lng: -46.53, score: 4.3, subtitle: 'Guarulhos' },
-  { id: 'dst_8', label: 'CIA Brasileira Diadema', lat: -23.69, lng: -46.62, score: 4.6, subtitle: 'Diadema' },
-]
-
-const MOCK_ENTREGAS = [
-  { id: 'ent_1', status: 'em_transito' as const, item: 'Diesel S10 Â· 25.000 L', dist: 'BR Petro SP', when: 'hÃ¡ 2h' },
-  { id: 'ent_2', status: 'entregue' as const, item: 'Gasolina C Â· 18.000 L', dist: 'RaÃ­zen Campinas', when: 'hÃ¡ 6h' },
-  { id: 'ent_3', status: 'em_transito' as const, item: 'Etanol Â· 12.000 L', dist: 'Ipiranga RJ', when: 'hÃ¡ 8h' },
-  { id: 'ent_4', status: 'entregue' as const, item: 'Diesel S500 Â· 30.000 L', dist: 'Vibra ABC', when: 'ontem' },
-]
-
-const STATUS_COLOR: Record<string, string> = {
+const STATUS_COLOR: Record<PedidoStatus, string> = {
   em_transito: 'var(--tanqe-orange)',
   entregue: 'var(--tanqe-success)',
   atrasado: 'var(--tanqe-danger)',
-  aguardando: 'var(--tanqe-gray)',
+  aguardando_coleta: 'var(--tanqe-gray)',
 }
 
-// ============================================
-// STYLES
-// ============================================
-
-const card = {
-  background: 'var(--tanqe-white)',
-  border: '1px solid var(--tanqe-stone)',
-  borderRadius: 4,
-  padding: 24,
+const STATUS_LABEL: Record<PedidoStatus, string> = {
+  em_transito: 'Em trânsito',
+  entregue: 'Entregue',
+  atrasado: 'Atrasado',
+  aguardando_coleta: 'Aguardando',
 }
-
-const cardTitle = {
-  fontFamily: 'var(--font-display)',
-  fontWeight: 700,
-  fontSize: 16,
-  color: 'var(--tanqe-black)',
-  margin: 0,
-  letterSpacing: '-0.01em',
-}
-
-const eyebrow = {
-  fontFamily: 'var(--font-mono)',
-  fontSize: 10,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.15em',
-  color: 'var(--tanqe-gray)',
-  margin: 0,
-}
-
-const sectionLink = {
-  fontFamily: 'var(--font-mono)',
-  fontSize: 11,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.12em',
-  color: 'var(--tanqe-orange)',
-  textDecoration: 'none',
-}
-
-// ============================================
-// COMPONENT
-// ============================================
 
 export default function PostoDashboard() {
-  const [loaded, setLoaded] = useState(false)
-  useEffect(() => {
-    const t = setTimeout(() => setLoaded(true), 250)
-    return () => clearTimeout(t)
-  }, [])
+  const posto = getPosto(POSTO_LOGADO_ID)!
+  const meusLeiloes = useMemo(() => LEILOES.filter((l) => l.postoId === POSTO_LOGADO_ID), [])
+  const ativos = meusLeiloes.filter((l) => l.status === 'aberto')
+  const emEntrega = meusLeiloes.filter((l) => l.status === 'em_entrega')
+  const pedidos = useMemo(() => pedidosByPosto(POSTO_LOGADO_ID), [])
+  const ultimasEntregas = pedidos.slice(0, 4)
+  const economiaMes = ECONOMIA_12M[ECONOMIA_12M.length - 1].economia
+  const economiaSparkline = ECONOMIA_12M.slice(-7).map((m) => m.economia)
+  const volumeSparkline = [78000, 80500, 82000, 81500, 83000, 84500]
+  const anpSparkline = ANP_30D.slice(-7).map((d) => d.gasolinaComum)
 
   return (
-    <div style={{ display: 'grid', gap: 24 }}>
-      {/* HEADER */}
-      <div style={{ paddingBottom: 24, borderBottom: '1px solid var(--tanqe-stone)' }}>
-        <p
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            textTransform: 'uppercase',
-            letterSpacing: '0.15em',
-            color: 'var(--tanqe-orange)',
-            margin: 0,
-            marginBottom: 12,
-          }}
-        >
-          {MOCK_USER.postoLabel}
-        </p>
-        <h1
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: 'clamp(32px, 4vw, 44px)',
-            color: 'var(--tanqe-black)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.1,
-            margin: 0,
-          }}
-        >
-          {MOCK_USER.greeting}
-        </h1>
-        <p
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontWeight: 300,
-            fontSize: 16,
-            color: 'var(--tanqe-gray)',
-            marginTop: 8,
-            marginBottom: 0,
-          }}
-        >
-          {MOCK_USER.subtitle}
-        </p>
+    <div style={{ display: 'grid', gap: 32 }}>
+      <SectionHeader
+        eyebrow={`${posto.bandeira.toUpperCase()} · ${posto.cidade.toUpperCase()}/${posto.uf}`}
+        title={`Bom dia, ${posto.nome.replace(/^Auto /, '')}.`}
+        subtitle={`Você tem ${ativos.length} ${ativos.length === 1 ? 'leilão aberto' : 'leilões abertos'} e ${emEntrega.length} ${emEntrega.length === 1 ? 'entrega a caminho' : 'entregas a caminho'}.`}
+      />
+
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
+        <StatCard label="Economia este mês" value={formatBRL(economiaMes)} delta="+18,3%" sublabel="vs. preço médio ANP" sparklineData={economiaSparkline} />
+        <StatCard label="Volume negociado" value={formatLitros(posto.volumeMensal)} delta="+12,0%" sublabel="vs. mês anterior" sparklineData={volumeSparkline} />
+        <StatCard label="Leilões ativos" value={ativos.length} sublabel="Encerram em até 24h" sparklineData={anpSparkline} />
+        <StatCard label="Score do posto" value={posto.score.toFixed(1)} star sublabel={`${posto.totalOperacoes} operações`} />
       </div>
 
-      {/* METRICS */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 24,
-        }}
-      >
-        {MOCK_METRICS.map((m) => (
-          <div key={m.label} style={card}>
-            <p style={{ ...eyebrow, marginBottom: 12 }}>{m.label}</p>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: 32,
-                color: 'var(--tanqe-black)',
-                letterSpacing: '-0.02em',
-                lineHeight: 1,
-              }}
-            >
-              {m.value}
-              {m.star && <span style={{ color: 'var(--tanqe-orange)', marginLeft: 6 }}>â˜…</span>}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-              {m.trend && (
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                    padding: '2px 8px',
-                    borderRadius: 2,
-                    background: m.trend.sign === 'pos' ? 'var(--tanqe-orange-pale)' : '#FFE5E5',
-                    color: m.trend.sign === 'pos' ? 'var(--tanqe-orange-deep)' : '#C23F06',
-                  }}
-                >
-                  {m.trend.text}
-                </span>
-              )}
-              <span
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 300,
-                  fontSize: 12,
-                  color: 'var(--tanqe-gray)',
-                }}
-              >
-                {m.subtitle}
-              </span>
-            </div>
-          </div>
-        ))}
+      {/* Economia 12m + Split combustível */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)', gap: 24 }} className="dash-row">
+        <Card title="Economia acumulada (12 meses)" eyebrow="Comparado à meta interna">
+          <BarChartTanqe
+            data={ECONOMIA_12M as unknown as Array<Record<string, unknown>>}
+            xKey="mes"
+            bars={[{ dataKey: 'economia', color: '#E8581A', name: 'Economia' }]}
+            yFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`}
+            height={240}
+          />
+        </Card>
+        <Card title="Distribuição por combustível" eyebrow="Mix do volume (12m)">
+          <PieChartTanqe
+            data={SPLIT_COMBUSTIVEL_POSTO as unknown as Array<Record<string, unknown>>}
+            nameKey="nome"
+            valueKey="valor"
+            valueFormatter={(v) => `${v}%`}
+            height={240}
+          />
+        </Card>
       </div>
 
-      {/* LINHA 3: LEILÃ•ES + ANP */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
-          gap: 24,
-        }}
-        className="dash-row-3"
-      >
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={cardTitle}>LeilÃµes em andamento</h3>
-            <Link href="/posto/leiloes" style={sectionLink}>Ver todos â†’</Link>
-          </div>
+      {/* Preço ANP + Leilões em andamento */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,2fr)', gap: 24 }} className="dash-row">
+        <Card title="Preço médio ANP" eyebrow="Últimos 30 dias">
+          <LineChartTanqe
+            data={ANP_30D.filter((_, i) => i % 2 === 0) as unknown as Array<Record<string, unknown>>}
+            xKey="dia"
+            lines={[
+              { dataKey: 'gasolinaComum', color: '#E8581A', name: 'Gasolina' },
+              { dataKey: 'etanol', color: '#F9C9AE', name: 'Etanol' },
+              { dataKey: 'dieselS10', color: '#0F0F0E', name: 'Diesel S10' },
+            ]}
+            yFormatter={(v) => `R$ ${v.toFixed(2)}`}
+            height={260}
+          />
+        </Card>
+        <Card title="Leilões em andamento" action={<Link href="/posto/leiloes" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-orange)', textDecoration: 'none' }}>Ver todos →</Link>}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {MOCK_LEILOES_ATIVOS.map((l) => (
-              <Link
-                key={l.id}
-                href={`/posto/leilao/${l.id}`}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'auto 1fr auto',
-                  gap: 24,
-                  alignItems: 'center',
-                  padding: 20,
-                  border: '1px solid var(--tanqe-stone)',
-                  borderRadius: 4,
-                  textDecoration: 'none',
-                  transition: 'border-color 0.15s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--tanqe-orange)')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--tanqe-stone)')}
-              >
-                <span
+            {ativos.slice(0, 3).map((l) => {
+              const ml = melhorLance(l)
+              return (
+                <Link
+                  key={l.id}
+                  href={`/posto/leilao/${l.id}`}
                   style={{
-                    background: 'var(--tanqe-orange-pale)',
-                    color: 'var(--tanqe-orange-deep)',
-                    padding: '6px 10px',
-                    borderRadius: 2,
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
+                    display: 'grid',
+                    gridTemplateColumns: 'auto 1fr auto',
+                    gap: 20,
+                    alignItems: 'center',
+                    padding: 16,
+                    border: '1px solid var(--tanqe-stone)',
+                    borderRadius: 4,
+                    textDecoration: 'none',
+                    transition: 'border-color var(--dur-fast) var(--ease-out)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--tanqe-orange)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--tanqe-stone)')}
+                >
+                  <Badge variant="aberto">{l.combustivel}</Badge>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--tanqe-black)' }}>
+                      {formatLitros(l.volume)} · {l.regiao}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--tanqe-gray)', textDecoration: 'line-through' }}>{formatPrecoLitro(l.precoTeto)}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--tanqe-orange)', fontWeight: 600 }}>→ {formatPrecoLitro(ml?.precoLitro ?? l.precoAtual)}</span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--tanqe-black)' }}>{formatCountdown(l.endsAt)}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', marginTop: 4 }}>{l.lances.length} lances</div>
+                  </div>
+                </Link>
+              )
+            })}
+            {ativos.length === 0 && (
+              <p style={{ color: 'var(--tanqe-gray)', textAlign: 'center', padding: 24 }}>Nenhum leilão aberto.</p>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Mapa + Entregas */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 24 }} className="dash-row">
+        <Card title="Distribuidoras próximas" eyebrow={`${DISTRIBUIDORAS.length} parceiras`}>
+          <MapView
+            center={[posto.lat, posto.lng]}
+            zoom={9}
+            height={320}
+            markers={DISTRIBUIDORAS.map((d) => ({ id: d.id, lat: d.lat, lng: d.lng, label: d.nome, subtitle: d.cidade, score: d.score }))}
+          />
+        </Card>
+        <Card title="Últimas entregas" action={<Link href="/posto/pedidos" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-orange)', textDecoration: 'none' }}>Ver todas →</Link>}>
+          <div>
+            {ultimasEntregas.map((p, i) => {
+              const d = getDist(p.distId)
+              return (
+                <Link
+                  key={p.id}
+                  href="/posto/pedidos"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    padding: '14px 0',
+                    borderBottom: i === ultimasEntregas.length - 1 ? 'none' : '1px solid var(--tanqe-stone)',
+                    textDecoration: 'none',
+                    color: 'inherit',
                   }}
                 >
-                  {l.combustivel}
-                </span>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--tanqe-black)' }}>
-                    {l.volume.toLocaleString('pt-BR')} L Â· {l.cidade}
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLOR[p.status], flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>{p.combustivel} · {formatLitros(p.volume)}</div>
+                    <div style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: 12, color: 'var(--tanqe-gray)', marginTop: 2 }}>
+                      {d?.nome} · {p.status === 'entregue' ? `entregue ${timeAgo(p.entregueEm || '')}` : STATUS_LABEL[p.status]}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginTop: 6,
-                      fontFamily: 'var(--font-body)',
-                      fontWeight: 300,
-                      fontSize: 12,
-                      color: 'var(--tanqe-gray)',
-                    }}
-                  >
-                    <span style={{ textDecoration: 'line-through' }}>R$ {l.precoRef.toFixed(2)}/L</span>
-                    <span>â†’</span>
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 700,
-                        fontSize: 18,
-                        color: 'var(--tanqe-orange)',
-                      }}
-                    >
-                      R$ {l.precoAtual.toFixed(2)}/L
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      marginTop: 10,
-                      height: 3,
-                      background: 'var(--tanqe-stone)',
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div style={{ width: `${l.progress}%`, height: '100%', background: 'var(--tanqe-orange)' }} />
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--tanqe-black)' }}>
-                    {l.encerraEmHoras}h {l.encerraEmMin}m
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 10,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.12em',
-                      color: 'var(--tanqe-gray)',
-                      marginTop: 4,
-                    }}
-                  >
-                    {l.lances} LANCES
-                  </div>
-                </div>
-              </Link>
-            ))}
+                  <ChevronRight size={14} color="var(--tanqe-gray)" />
+                </Link>
+              )
+            })}
+            {ultimasEntregas.length === 0 && <p style={{ color: 'var(--tanqe-gray)', textAlign: 'center', padding: 24 }}>Nenhuma entrega recente.</p>}
           </div>
-        </div>
-
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={cardTitle}>PreÃ§o mÃ©dio ANP</h3>
-            <span style={eyebrow}>ÃšLTIMOS 10 DIAS</span>
-          </div>
-          <div style={{ height: 240, opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={MOCK_ANP_DATA} margin={{ top: 4, right: 0, left: -8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--tanqe-stone)" />
-                <XAxis
-                  dataKey="dia"
-                  tick={{ fontFamily: 'var(--font-mono)', fontSize: 10, fill: 'var(--tanqe-gray)' }}
-                  axisLine={{ stroke: 'var(--tanqe-stone)' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  domain={['dataMin - 0.1', 'dataMax + 0.1']}
-                  tick={{ fontFamily: 'var(--font-mono)', fontSize: 10, fill: 'var(--tanqe-gray)' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v: number) => `R$ ${v.toFixed(2)}`}
-                  width={56}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--tanqe-charcoal)',
-                    border: 'none',
-                    borderRadius: 3,
-                    color: '#FFFFFF',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                  }}
-                  labelStyle={{ color: '#FFFFFF' }}
-                  formatter={(v) => `R$ ${Number(v).toFixed(2)}/L`}
-                />
-                <Line type="monotone" dataKey="gasolina" stroke="#E8581A" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="etanol" stroke="#F9C9AE" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="diesel" stroke="#0F0F0E" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              gap: 16,
-              marginTop: 12,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: 'var(--tanqe-gray)',
-            }}
-          >
-            {[
-              { color: '#E8581A', label: 'GASOLINA' },
-              { color: '#F9C9AE', label: 'ETANOL' },
-              { color: '#0F0F0E', label: 'DIESEL' },
-            ].map((it) => (
-              <div key={it.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 10, height: 10, background: it.color, display: 'inline-block' }} />
-                {it.label}
-              </div>
-            ))}
-          </div>
-        </div>
+        </Card>
       </div>
 
-      {/* LINHA 4: MAPA + ENTREGAS */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 7fr) minmax(0, 5fr)',
-          gap: 24,
-        }}
-        className="dash-row-4"
-      >
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={cardTitle}>Distribuidoras prÃ³ximas</h3>
-            <span style={eyebrow}>8 PARCEIRAS</span>
-          </div>
-          <MapView center={[-23.55, -46.63]} zoom={9} markers={MOCK_DISTRIBUIDORAS} />
-        </div>
-
-        <div style={card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <h3 style={cardTitle}>Ãšltimas entregas</h3>
-            <Link href="/posto/contratos" style={sectionLink}>Ver todas â†’</Link>
-          </div>
-          <div>
-            {MOCK_ENTREGAS.map((e, idx) => (
-              <div
-                key={e.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: '14px 0',
-                  borderBottom: idx === MOCK_ENTREGAS.length - 1 ? 'none' : '1px solid var(--tanqe-stone)',
-                }}
-              >
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: STATUS_COLOR[e.status],
-                    flexShrink: 0,
-                  }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--tanqe-black)' }}>
-                    {e.item}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      fontWeight: 300,
-                      fontSize: 12,
-                      color: 'var(--tanqe-gray)',
-                      marginTop: 2,
-                    }}
-                  >
-                    {e.dist} Â· {e.when}
-                  </div>
-                </div>
-                <ChevronRight size={14} color="var(--tanqe-gray)" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <style>{`
-        @media (max-width: 1023px) {
-          .dash-row-3, .dash-row-4 { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+      <style>{`@media (max-width: 1023px) { .dash-row { grid-template-columns: 1fr !important; } }`}</style>
     </div>
   )
 }

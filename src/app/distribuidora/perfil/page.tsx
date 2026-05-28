@@ -1,132 +1,216 @@
-﻿'use client'
-
+'use client'
 
 export const dynamic = 'force-dynamic'
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { Profile } from '@/lib/types'
-import Stars from '@/components/ui/Stars'
-import { SkeletonCard } from '@/components/ui/Skeleton'
 
-interface Avaliacao {
-  id: string
-  nota: number
-  comentario: string
-  created_at: string
-  avaliador: { nome: string } | null
+import { useMemo } from 'react'
+import { MapPin, Phone, Mail, Building2, Calendar, Award, Truck } from 'lucide-react'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { Card } from '@/components/ui/Card'
+import { Avatar } from '@/components/ui/Avatar'
+import { Badge, type BadgeVariant } from '@/components/ui/Badge'
+import {
+  DIST_LOGADA_ID,
+  CERTIFICACOES_DIST,
+  contratosByDist,
+  avaliacoesRecebidasPorDist,
+  getDist,
+  completudeCadastro,
+} from '@/lib/mock-data'
+import { formatBRL, formatLitros, formatData, timeAgo } from '@/lib/format'
+
+const CERT_VARIANT: Record<string, BadgeVariant> = {
+  ativa: 'concluido',
+  pendente: 'pendente',
+  vencida: 'cancelado',
 }
 
-export default function PerfilDistribuidoraPage() {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([])
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+export default function PerfilDistPage() {
+  const dist = getDist(DIST_LOGADA_ID)!
+  const completude = completudeCadastro(dist)
+  const contratos = useMemo(() => contratosByDist(DIST_LOGADA_ID), [])
+  const avaliacoes = useMemo(() => avaliacoesRecebidasPorDist(DIST_LOGADA_ID), [])
+  const receitaTotal = contratos.reduce((s, c) => s + c.valor, 0)
+  const volumeTotal = contratos.reduce((s, c) => s + c.volume, 0)
+  const postosClientes = new Set(contratos.map((c) => c.postoId)).size
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(data)
-
-      const { data: avs } = await supabase
-        .from('avaliacoes')
-        .select('id, nota, comentario, created_at, avaliador:profiles!avaliacoes_avaliador_id_fkey(nome)')
-        .eq('avaliado_id', user.id)
-        .order('created_at', { ascending: false })
-      setAvaliacoes((avs as unknown as Avaliacao[]) || [])
-      setLoading(false)
+  const breakdown = useMemo(() => {
+    if (avaliacoes.length === 0) return { pontualidade: 0, qualidade: 0, comunicacao: 0 }
+    const sum = avaliacoes.reduce(
+      (acc, a) => ({
+        pontualidade: acc.pontualidade + a.criterios.pontualidade,
+        qualidade: acc.qualidade + a.criterios.qualidade,
+        comunicacao: acc.comunicacao + a.criterios.comunicacao,
+      }),
+      { pontualidade: 0, qualidade: 0, comunicacao: 0 },
+    )
+    return {
+      pontualidade: sum.pontualidade / avaliacoes.length,
+      qualidade: sum.qualidade / avaliacoes.length,
+      comunicacao: sum.comunicacao / avaliacoes.length,
     }
-    load()
-  }, [])
-
-  if (loading) return <div className="max-w-2xl space-y-4"><SkeletonCard /><SkeletonCard /></div>
-  if (!profile) return <p className="text-gray-500">Perfil nÃ£o encontrado</p>
+  }, [avaliacoes])
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Perfil</h1>
+    <div style={{ display: 'grid', gap: 32 }}>
+      <SectionHeader
+        eyebrow="Cadastro · Reputação · Cobertura"
+        title="Perfil da distribuidora"
+        subtitle="Tudo que os postos enxergam antes de aceitar seus lances. Mantenha em dia pra fechar mais negócios."
+      />
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6 transition-all duration-200 hover:shadow-md">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-[#FFF1E8] rounded-full flex items-center justify-center text-2xl font-bold text-brand">
-            {profile.nome?.charAt(0) || 'D'}
-          </div>
+      {/* Header card */}
+      <div style={{ background: 'var(--tanqe-charcoal)', borderRadius: 4, padding: 32, color: 'var(--tanqe-white)', position: 'relative', overflow: 'hidden' }}>
+        <div aria-hidden style={{ position: 'absolute', right: -100, top: -100, width: 360, height: 360, background: 'radial-gradient(circle, rgba(232,88,26,0.18) 0%, transparent 70%)' }} />
+        <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 24, alignItems: 'center' }} className="perfil-header">
+          <Avatar name={dist.nome} size={72} square />
           <div>
-            <h2 className="text-xl font-bold">{profile.nome}</h2>
-            <p className="text-sm text-gray-500">Distribuidora</p>
-            <div className="flex items-center gap-2 mt-1">
-              <Stars rating={profile.score} />
-              <span className="text-sm font-medium text-gray-600">{profile.score?.toFixed(1)}</span>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--tanqe-orange)', margin: 0, marginBottom: 8 }}>
+              Distribuidora · CNPJ {dist.cnpj}
+            </p>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 32, letterSpacing: '-0.02em', margin: 0 }}>{dist.nome}</h2>
+            <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: 14, color: 'var(--tanqe-gray-light)', margin: 0, marginTop: 6 }}>
+              {dist.razaoSocial}
+            </p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 56, color: 'var(--tanqe-orange)', lineHeight: 1, letterSpacing: '-0.04em' }}>
+              {dist.score.toFixed(1)}<span style={{ fontSize: 28 }}>★</span>
             </div>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--tanqe-gray)', margin: 0, marginTop: 4 }}>
+              {avaliacoes.length} avaliações · {dist.totalOperacoes} operações
+            </p>
           </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><span className="text-gray-500">CNPJ</span><p className="font-medium">{profile.cnpj || 'â€”'}</p></div>
-          <div><span className="text-gray-500">Telefone</span><p className="font-medium">{profile.telefone || 'â€”'}</p></div>
-          <div><span className="text-gray-500">Score</span><p className="font-medium">{profile.score?.toFixed(1)}</p></div>
-          <div><span className="text-gray-500">LocalizaÃ§Ã£o</span><p className="font-medium">{profile.cidade}/{profile.estado}</p></div>
-          {profile.capacidade_logistica && <div><span className="text-gray-500">Capacidade</span><p className="font-medium">{profile.capacidade_logistica}</p></div>}
-          {profile.total_deals && <div><span className="text-gray-500">Total Deals</span><p className="font-medium">{profile.total_deals}</p></div>}
-        </div>
-
-        {profile.regiao_atuacao && profile.regiao_atuacao.length > 0 && (
-          <div>
-            <span className="text-sm text-gray-500">RegiÃµes de AtuaÃ§Ã£o</span>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {profile.regiao_atuacao.map(r => (
-                <span key={r} className="bg-blue-50 text-blue-700 rounded-full px-3 py-1 text-xs font-semibold">{r}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {profile.combustiveis && profile.combustiveis.length > 0 && (
-          <div>
-            <span className="text-sm text-gray-500">CombustÃ­veis</span>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {profile.combustiveis.map(c => (
-                <span key={c} className="bg-[#FFF1E8] text-brand rounded-full px-3 py-1 text-xs font-semibold">{c}</span>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* AvaliaÃ§Ãµes */}
-      <div className="mt-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">AvaliaÃ§Ãµes Recebidas</h2>
-        {avaliacoes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-4 bg-white rounded-2xl border border-gray-100">
-            <svg className="w-16 h-16 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-            </svg>
-            <p className="text-lg font-medium text-gray-400">Nenhuma avaliaÃ§Ã£o recebida ainda</p>
-            <p className="text-sm text-gray-300">AvaliaÃ§Ãµes aparecem apÃ³s a conclusÃ£o de negociaÃ§Ãµes</p>
+      {/* Completude */}
+      <Card title="Completude do cadastro" eyebrow="100% = lances mais bem precificados">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }} className="completude-wrap">
+          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 56, color: 'var(--tanqe-orange)', lineHeight: 1, letterSpacing: '-0.04em' }}>
+            {completude}<span style={{ fontSize: 28 }}>%</span>
           </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ height: 8, background: 'var(--tanqe-stone)', borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
+              <div style={{ width: `${completude}%`, height: '100%', background: 'var(--gradient-orange)' }} />
+            </div>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--tanqe-gray)', margin: 0, lineHeight: 1.6 }}>
+              Postos confiam mais em distribuidoras com cadastro completo e certificações ativas.
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Cards cadastrais */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+        <Card title="Razão social e documentos" eyebrow="Dados jurídicos">
+          <KV label="Razão social" value={dist.razaoSocial} />
+          <KV label="Nome fantasia" value={dist.nome} />
+          <KV label="CNPJ" value={dist.cnpj} mono />
+          <KV label="Inscrição estadual" value={dist.inscricaoEstadual} mono />
+        </Card>
+
+        <Card title="Endereço e contato" eyebrow="Sede">
+          <KV icon={<MapPin size={14} color="var(--tanqe-gray)" />} label="Endereço" value={dist.endereco} />
+          <KV icon={<Building2 size={14} color="var(--tanqe-gray)" />} label="Cidade/UF" value={`${dist.cidade}/${dist.uf}`} />
+          <KV icon={<Phone size={14} color="var(--tanqe-gray)" />} label="Telefone" value={dist.telefone} mono />
+          <KV icon={<Mail size={14} color="var(--tanqe-gray)" />} label="E-mail" value={dist.email} />
+        </Card>
+
+        <Card title="Logística e operação" eyebrow="Capacidade">
+          <KV icon={<Truck size={14} color="var(--tanqe-gray)" />} label="Bases atendidas" value={dist.basesAtendidas.join(', ')} />
+          <KV label="Capacidade diária" value={formatLitros(dist.capacidadeLogistica) + '/dia'} />
+          <KV label="Volume mensal" value={formatLitros(dist.volumeMensal)} />
+          <KV label="Tempo médio entrega" value={`${dist.tempoMedioEntrega}h`} />
+          <KV label="Combustíveis" value={dist.combustiveis.join(', ')} />
+          <KV label="Postos atendidos" value={`${postosClientes}`} />
+          <KV label="Receita total" value={formatBRL(receitaTotal)} />
+          <KV label="Volume entregue" value={formatLitros(volumeTotal)} />
+        </Card>
+      </div>
+
+      {/* Score breakdown */}
+      <Card title="Score por critério" eyebrow="Como os postos te avaliam">
+        <div style={{ display: 'grid', gap: 18 }}>
+          {[
+            { nome: 'Pontualidade', valor: breakdown.pontualidade },
+            { nome: 'Qualidade do produto', valor: breakdown.qualidade },
+            { nome: 'Comunicação comercial', valor: breakdown.comunicacao },
+          ].map((b) => {
+            const pct = (b.valor / 5) * 100
+            return (
+              <div key={b.nome} style={{ display: 'grid', gridTemplateColumns: '180px 1fr 64px', gap: 16, alignItems: 'center' }}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500 }}>{b.nome}</span>
+                <div style={{ height: 8, background: 'var(--tanqe-stone)', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', background: 'var(--gradient-orange)' }} />
+                </div>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--tanqe-orange)', textAlign: 'right' }}>
+                  {b.valor.toFixed(1)} / 5
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </Card>
+
+      {/* Certificações */}
+      <Card title="Certificações e licenças" eyebrow="Compliance regulatório" action={<Award size={18} color="var(--tanqe-orange)" />}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          {CERTIFICACOES_DIST.map((c) => (
+            <div key={c.id} style={{ padding: 16, border: '1px solid var(--tanqe-stone)', borderRadius: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--tanqe-black)', margin: 0 }}>{c.nome}</p>
+                <Badge variant={CERT_VARIANT[c.status]}>{c.status === 'ativa' ? 'Ativa' : c.status === 'pendente' ? 'Renovar' : 'Vencida'}</Badge>
+              </div>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--tanqe-gray)', margin: 0 }}>{c.emissor}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)' }}>
+                <span>nº {c.numero}</span>
+                <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                  <Calendar size={11} /> vence {formatData(c.vencimentoIso)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Histórico avaliações */}
+      <Card title="Avaliações recebidas" eyebrow={`${avaliacoes.length} avaliações`}>
+        {avaliacoes.length === 0 ? (
+          <p style={{ color: 'var(--tanqe-gray)', textAlign: 'center', padding: 24 }}>Nenhuma avaliação ainda.</p>
         ) : (
-          <div className="space-y-3">
-            {avaliacoes.map((av) => (
-              <div key={av.id} className="bg-white rounded-xl border border-gray-100 p-4 transition-all duration-200 hover:shadow-sm">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-sm font-semibold text-gray-500">
-                    {(av.avaliador as unknown as { nome: string })?.nome?.charAt(0) || '?'}
+          <div style={{ display: 'grid', gap: 12 }}>
+            {avaliacoes.slice(0, 6).map((a) => (
+              <div key={a.id} style={{ display: 'flex', gap: 12, padding: 14, border: '1px solid var(--tanqe-stone)', borderRadius: 4 }}>
+                <Avatar name={`P ${a.avaliadorId}`} size={36} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14 }}>Posto #{a.avaliadorId.slice(-3)}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--tanqe-orange)', fontSize: 12 }}>{'★'.repeat(a.nota)}{'☆'.repeat(5 - a.nota)}</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-sm">{(av.avaliador as unknown as { nome: string })?.nome || 'AnÃ´nimo'}</p>
-                      <span className="text-xs text-gray-400">{new Date(av.created_at).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                    <Stars rating={av.nota} />
-                    {av.comentario && <p className="text-sm text-gray-600 italic mt-1">{av.comentario}</p>}
-                  </div>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--tanqe-gray)', margin: 0, lineHeight: 1.5 }}>{a.comentario}</p>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--tanqe-gray-light)', margin: 0, marginTop: 6 }}>
+                    {timeAgo(a.criadoEm)}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Card>
+
+      <style>{`@media (max-width: 700px) { .perfil-header { grid-template-columns: 1fr !important; text-align: center; } .completude-wrap { flex-direction: column; align-items: stretch; gap: 12px; } }`}</style>
+    </div>
+  )
+}
+
+function KV({ icon, label, value, mono }: { icon?: React.ReactNode; label: string; value: string; mono?: boolean }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 14, padding: '8px 0', fontFamily: 'var(--font-body)', fontSize: 14, alignItems: 'baseline' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--tanqe-gray)', fontSize: 13 }}>
+        {icon}
+        {label}
+      </span>
+      <span style={{ fontFamily: mono ? 'var(--font-mono)' : 'var(--font-body)', fontWeight: 500, color: 'var(--tanqe-black)', textAlign: 'right' }}>{value}</span>
     </div>
   )
 }

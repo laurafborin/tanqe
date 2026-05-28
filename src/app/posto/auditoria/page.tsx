@@ -1,169 +1,145 @@
-﻿'use client'
-
+'use client'
 
 export const dynamic = 'force-dynamic'
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { Contrato } from '@/lib/types'
-import { auditarContratos, brl, pct, ANP_REFERENCIA_DATA, type AuditoriaResumo } from '@/lib/anp'
-import MetricCard from '@/components/ui/MetricCard'
-import { Icons } from '@/components/ui/SvgIcons'
-import { SkeletonMetric, SkeletonTable } from '@/components/ui/Skeleton'
+
+import { useMemo } from 'react'
+import { ShieldCheck, FileText, CircleCheck } from 'lucide-react'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { Card } from '@/components/ui/Card'
+import { StatCard } from '@/components/ui/StatCard'
+import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
+import { Avatar } from '@/components/ui/Avatar'
+import {
+  contratosByPosto,
+  EVENTOS_AUDITORIA_POSTO,
+  POSTO_LOGADO_ID,
+  ANP_30D,
+  type Contrato,
+} from '@/lib/mock-data'
+import { formatBRL, formatLitros, formatPrecoLitro, formatPctRaw, formatDataHora } from '@/lib/format'
+
+const ANP_MAP: Record<string, number> = {
+  'Gasolina Comum': 5.78,
+  'Gasolina Aditivada': 5.98,
+  'Etanol Hidratado': 3.91,
+  'Diesel S-10': 5.91,
+  'Diesel S-500': 5.74,
+}
+
+interface AuditoriaRow extends Contrato {
+  refAnp: number
+  economiaPorLitro: number
+  economiaTotal: number
+  desconto: number
+}
 
 export default function AuditoriaPage() {
-  const [resumo, setResumo] = useState<AuditoriaResumo | null>(null)
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const contratos = useMemo(
+    () => contratosByPosto(POSTO_LOGADO_ID).filter((c) => c.status === 'assinado'),
+    [],
+  )
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setLoading(false); return }
-      const { data } = await supabase
-        .from('contratos')
-        .select('*, leilao:leiloes(*), lance:lances(*, distribuidora:profiles!lances_dist_id_fkey(*))')
-        .eq('posto_id', user.id)
-        .order('created_at', { ascending: false })
-      setResumo(auditarContratos((data as Contrato[]) || []))
-      setLoading(false)
-    }
-    load()
-  }, [])
+  const linhas: AuditoriaRow[] = contratos.map((c) => {
+    const refAnp = ANP_MAP[c.combustivel] ?? c.precoLitro
+    const economiaPorLitro = refAnp - c.precoLitro
+    const economiaTotal = economiaPorLitro * c.volume
+    const desconto = (economiaPorLitro / refAnp) * 100
+    return { ...c, refAnp, economiaPorLitro, economiaTotal, desconto }
+  })
+
+  const totalEconomia = linhas.reduce((s, r) => s + r.economiaTotal, 0)
+  const totalVolume = linhas.reduce((s, r) => s + r.volume, 0)
+  const descontoMedio = linhas.length > 0 ? linhas.reduce((s, r) => s + r.desconto * r.volume, 0) / totalVolume : 0
+  const totalContratos = linhas.length
+
+  const eventos = EVENTOS_AUDITORIA_POSTO.slice(0, 12)
+
+  const cols: DataTableColumn<AuditoriaRow>[] = [
+    { key: 'numero', label: 'Contrato', render: (r) => <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>{r.numero}</span> },
+    { key: 'combustivel', label: 'Combustível' },
+    { key: 'volume', label: 'Volume', align: 'right', render: (r) => formatLitros(r.volume) },
+    { key: 'preco', label: 'Pago/L', align: 'right', render: (r) => <span style={{ fontFamily: 'var(--font-mono)' }}>{formatPrecoLitro(r.precoLitro)}</span> },
+    { key: 'refAnp', label: 'Ref. ANP', align: 'right', render: (r) => <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--tanqe-gray)' }}>{formatPrecoLitro(r.refAnp)}</span> },
+    {
+      key: 'desconto',
+      label: 'Desconto',
+      align: 'right',
+      render: (r) => (
+        <span style={{ fontFamily: 'var(--font-mono)', color: r.desconto >= 0 ? 'var(--tanqe-success)' : 'var(--tanqe-danger)', fontWeight: 600 }}>
+          {formatPctRaw(r.desconto, 1, true)}
+        </span>
+      ),
+    },
+    {
+      key: 'economia',
+      label: 'Economia (R$)',
+      align: 'right',
+      render: (r) => (
+        <span style={{ fontFamily: 'var(--font-mono)', color: r.economiaTotal >= 0 ? 'var(--tanqe-success)' : 'var(--tanqe-danger)', fontWeight: 600 }}>
+          {formatBRL(r.economiaTotal)}
+        </span>
+      ),
+    },
+  ]
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Auditoria de Economia</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Quanto a plataforma economizou de verdade â€” medido contra o seu preÃ§o-teto e a
-          referÃªncia ANP de distribuiÃ§Ã£o.
-        </p>
+    <div style={{ display: 'grid', gap: 32 }}>
+      <SectionHeader
+        eyebrow="Compliance + Transparência"
+        title="Auditoria de operações"
+        subtitle="Cada contrato comparado ao preço médio ANP do combustível. Eventos imutáveis com hash criptográfico — pronto pra fiscal, contábil ou banca."
+      />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
+        <StatCard label="Economia total vs ANP" value={formatBRL(totalEconomia)} delta={formatPctRaw(descontoMedio, 1, true)} sublabel="ponderado por volume" />
+        <StatCard label="Volume auditado" value={formatLitros(totalVolume)} sublabel={`em ${totalContratos} contratos`} />
+        <StatCard label="Desconto médio" value={formatPctRaw(descontoMedio, 1, true)} sublabel="vs. preço médio ANP" />
+        <StatCard label="Eventos rastreados" value={EVENTOS_AUDITORIA_POSTO.length} sublabel="imutáveis com hash" />
       </div>
 
-      {loading ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonMetric key={i} />)}</div>
-          <SkeletonTable rows={4} />
-        </div>
-      ) : !resumo || resumo.totalContratos === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white rounded-2xl border border-gray-100">
-          <div className="text-gray-200">{Icons.calculator}</div>
-          <p className="text-lg font-medium text-gray-400">Nenhum contrato fechado para auditar ainda</p>
-          <p className="text-sm text-gray-400">Feche um leilÃ£o e a economia aparecerÃ¡ aqui automaticamente.</p>
-        </div>
-      ) : (
-        <>
-          {/* MÃ©tricas */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <MetricCard
-              label="Economia vs. ANP"
-              value={brl(resumo.economiaAnpTotal)}
-              icon={Icons.dollar}
-              iconBg="bg-green-50 text-green-500"
-              sub={`em ${resumo.cobertosPorAnp} contrato(s)`}
-            />
-            <MetricCard
-              label="Desconto mÃ©dio"
-              value={pct(resumo.descontoMedioAnp)}
-              icon={Icons.trending}
-              iconBg="bg-[#FFF1E8] text-[#E8621A]"
-              sub="ponderado por volume"
-            />
-            <MetricCard
-              label="Economia vs. teto"
-              value={brl(resumo.economiaTetoTotal)}
-              icon={Icons.target}
-              iconBg="bg-blue-50 text-blue-500"
-              sub="vs. preÃ§o mÃ¡ximo definido"
-            />
-            <MetricCard
-              label="Volume auditado"
-              value={`${resumo.volumeTotal.toLocaleString('pt-BR')} L`}
-              icon={Icons.layers}
-              iconBg="bg-purple-50 text-purple-500"
-            />
-          </div>
+      <Card title="Detalhamento por contrato" eyebrow="Cada linha é uma operação fechada" padding={0}>
+        <DataTable
+          columns={cols}
+          rows={linhas}
+          rowKey={(r) => r.id}
+          emptyMessage="Nenhum contrato auditável ainda."
+        />
+      </Card>
 
-          {/* Tabela detalhada */}
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Detalhamento por contrato</h2>
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500">
-                  <tr>
-                    <th className="text-left px-4 py-3 font-medium">CombustÃ­vel</th>
-                    <th className="text-right px-4 py-3 font-medium">Volume</th>
-                    <th className="text-right px-4 py-3 font-medium">Pago / L</th>
-                    <th className="text-right px-4 py-3 font-medium">Ref. ANP / L</th>
-                    <th className="text-right px-4 py-3 font-medium">Desconto</th>
-                    <th className="text-right px-4 py-3 font-medium">Economia (R$)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {resumo.itens.map((it) => {
-                    const temAnp = it.economiaAnpPct !== null
-                    const positivo = (it.economiaAnpRS ?? 0) >= 0
-                    return (
-                      <tr key={it.contrato.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium text-gray-900">{it.combustivel}</td>
-                        <td className="px-4 py-3 text-right text-gray-600">{it.volume.toLocaleString('pt-BR')} L</td>
-                        <td className="px-4 py-3 text-right font-mono text-gray-900">R$ {it.precoLitro.toFixed(3)}</td>
-                        <td className="px-4 py-3 text-right font-mono text-gray-400">
-                          {it.refAnp ? `R$ ${it.refAnp.toFixed(2)}` : 'â€”'}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {temAnp ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <div className="w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden hidden sm:block">
-                                <div
-                                  className={`h-full rounded-full ${positivo ? 'bg-green-400' : 'bg-red-400'}`}
-                                  style={{ width: `${Math.min(100, Math.abs((it.economiaAnpPct as number) * 100) * 4)}%` }}
-                                />
-                              </div>
-                              <span className={`font-semibold ${positivo ? 'text-green-600' : 'text-red-500'}`}>
-                                {pct(it.economiaAnpPct as number)}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-gray-300">â€”</span>
-                          )}
-                        </td>
-                        <td className={`px-4 py-3 text-right font-semibold ${positivo ? 'text-green-600' : 'text-red-500'}`}>
-                          {temAnp ? brl(it.economiaAnpRS as number) : 'â€”'}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-                <tfoot className="bg-gray-50 font-semibold text-gray-900">
-                  <tr>
-                    <td className="px-4 py-3">Total</td>
-                    <td className="px-4 py-3 text-right">{resumo.volumeTotal.toLocaleString('pt-BR')} L</td>
-                    <td className="px-4 py-3" />
-                    <td className="px-4 py-3" />
-                    <td className="px-4 py-3 text-right text-green-600">{pct(resumo.descontoMedioAnp)}</td>
-                    <td className="px-4 py-3 text-right text-green-600">{brl(resumo.economiaAnpTotal)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+      {/* Timeline de eventos */}
+      <Card title="Trilha de eventos imutável" eyebrow="Auditoria fiscal e jurídica" action={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)' }}>SHA-256</span>}>
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', left: 18, top: 6, bottom: 6, width: 1, background: 'var(--tanqe-stone)' }} />
+          {eventos.map((e) => (
+            <div key={e.id} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 14, alignItems: 'flex-start', padding: '12px 0', position: 'relative' }}>
+              <div style={{ width: 36, display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--tanqe-orange-pale)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {e.acao.includes('Contrato gerado') ? <FileText size={14} color="var(--tanqe-orange-deep)" /> : e.acao.includes('assinado pelo posto') ? <Avatar name="P" size={20} /> : <CircleCheck size={14} color="var(--tanqe-success)" />}
+                </div>
+              </div>
+              <div>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500, color: 'var(--tanqe-black)', margin: 0 }}>{e.acao}</p>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--tanqe-gray)', margin: 0, marginTop: 2 }}>{e.ator} · {e.referencia}</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)', margin: 0 }}>{formatDataHora(e.quandoIso)}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--tanqe-gray-light)', margin: 0, marginTop: 2 }}>hash: {e.hash}</p>
+              </div>
             </div>
-          </div>
+          ))}
+        </div>
+      </Card>
 
-          {/* Metodologia */}
-          <div className="mt-6 bg-[#FFF1E8] border border-[#E8621A]/10 rounded-2xl p-5 text-sm text-gray-600 flex gap-3">
-            <div className="text-[#E8621A] flex-shrink-0">{Icons.alert}</div>
-            <div>
-              <p className="font-semibold text-gray-800 mb-1">Como a economia Ã© calculada</p>
-              <p>
-                Para cada contrato, o preÃ§o efetivamente pago por litro (valor Ã· volume) Ã©
-                comparado Ã  referÃªncia de distribuiÃ§Ã£o da ANP para aquele combustÃ­vel. A
-                economia Ã© a diferenÃ§a multiplicada pelo volume contratado. O desconto mÃ©dio Ã©
-                ponderado pelo volume de cada negociaÃ§Ã£o. Fonte da referÃªncia: {ANP_REFERENCIA_DATA}.
-              </p>
-            </div>
-          </div>
-        </>
-      )}
+      <Card title="Como calculamos a economia" eyebrow="Metodologia">
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <ShieldCheck size={20} color="var(--tanqe-orange)" />
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--tanqe-gray)', lineHeight: 1.7, margin: 0 }}>
+            Para cada contrato fechado, comparamos o preço pago por litro à referência ANP de distribuição do combustível.
+            A economia é a diferença multiplicada pelo volume. O desconto médio é ponderado pelo volume de cada operação.
+            Última atualização da referência ANP: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--tanqe-black)' }}>{ANP_30D[ANP_30D.length - 1].dia}</span>.
+          </p>
+        </div>
+      </Card>
     </div>
   )
 }

@@ -1,290 +1,135 @@
-﻿'use client'
-
+'use client'
 
 export const dynamic = 'force-dynamic'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
-import type { Leilao } from '@/lib/types'
+
+import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { Card } from '@/components/ui/Card'
+import { Badge, type BadgeVariant } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
+import {
+  LEILOES,
+  POSTO_LOGADO_ID,
+  type Leilao,
+  type LeilaoStatus,
+  melhorLance,
+} from '@/lib/mock-data'
+import { formatLitros, formatPrecoLitro, formatCountdown, formatData } from '@/lib/format'
 
-const eyebrow = {
-  fontFamily: 'var(--font-mono)',
-  fontSize: 11,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.15em',
-  color: 'var(--tanqe-orange)',
-  margin: 0,
+type Tab = 'todos' | LeilaoStatus
+
+const TAB_LABELS: Record<Tab, string> = {
+  todos: 'Todos',
+  aberto: 'Abertos',
+  aguardando_pagamento: 'Aguardando',
+  em_entrega: 'Em entrega',
+  concluido: 'Concluídos',
+  cancelado: 'Cancelados',
 }
 
-const title = {
-  fontFamily: 'var(--font-display)',
-  fontWeight: 800,
-  fontSize: 'clamp(28px, 3.5vw, 40px)',
-  color: 'var(--tanqe-black)',
-  letterSpacing: '-0.02em',
-  lineHeight: 1.1,
-  margin: '12px 0 8px',
+const STATUS_VARIANT: Record<LeilaoStatus, BadgeVariant> = {
+  aberto: 'aberto',
+  aguardando_pagamento: 'pendente',
+  em_entrega: 'destaque',
+  concluido: 'concluido',
+  cancelado: 'cancelado',
 }
 
-const subtitle = {
-  fontFamily: 'var(--font-body)',
-  fontWeight: 300,
-  fontSize: 15,
-  color: 'var(--tanqe-gray)',
-  margin: 0,
-}
-
-const statusStyle: Record<string, { bg: string; color: string; label: string }> = {
-  aberto: { bg: 'var(--tanqe-orange-pale)', color: 'var(--tanqe-orange-deep)', label: 'ABERTO' },
-  contratado: { bg: '#E8F5E9', color: 'var(--tanqe-success)', label: 'CONTRATADO' },
-  encerrado: { bg: 'var(--tanqe-stone)', color: 'var(--tanqe-gray)', label: 'ENCERRADO' },
-  cancelado: { bg: '#FFE5E5', color: 'var(--tanqe-danger)', label: 'CANCELADO' },
+const STATUS_LABEL: Record<LeilaoStatus, string> = {
+  aberto: 'Aberto',
+  aguardando_pagamento: 'Aguardando pgto',
+  em_entrega: 'Em entrega',
+  concluido: 'Concluído',
+  cancelado: 'Cancelado',
 }
 
 export default function LeiloesPostoPage() {
-  const [leiloes, setLeiloes] = useState<Leilao[]>([])
-  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const [tab, setTab] = useState<Tab>('todos')
+  const meus = useMemo(() => LEILOES.filter((l) => l.postoId === POSTO_LOGADO_ID), [])
+  const counts = useMemo(() => {
+    const c: Record<Tab, number> = { todos: meus.length, aberto: 0, aguardando_pagamento: 0, em_entrega: 0, concluido: 0, cancelado: 0 }
+    for (const l of meus) c[l.status] += 1
+    return c
+  }, [meus])
+  const filtered = useMemo(() => (tab === 'todos' ? meus : meus.filter((l) => l.status === tab)), [meus, tab])
 
-  useEffect(() => {
-    const supabase = createClient()
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setLoading(false); return }
-      const { data } = await supabase
-        .from('leiloes')
-        .select('*')
-        .eq('posto_id', user.id)
-        .order('created_at', { ascending: false })
-      setLeiloes(data || [])
-      setLoading(false)
-    }
-    load()
-  }, [])
-
-  const ativos = leiloes.filter(l => l.status === 'aberto').length
-  const contratados = leiloes.filter(l => l.status === 'contratado').length
+  const cols: DataTableColumn<Leilao>[] = [
+    { key: 'codigo', label: 'Código', render: (l) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--tanqe-gray)' }}>{l.codigo}</span> },
+    { key: 'combustivel', label: 'Combustível', render: (l) => <span style={{ fontWeight: 500 }}>{l.combustivel}</span> },
+    { key: 'volume', label: 'Volume', align: 'right', render: (l) => formatLitros(l.volume) },
+    { key: 'precoTeto', label: 'Teto', align: 'right', render: (l) => <span style={{ fontFamily: 'var(--font-mono)' }}>{formatPrecoLitro(l.precoTeto)}</span> },
+    {
+      key: 'melhor',
+      label: 'Melhor lance',
+      align: 'right',
+      render: (l) => {
+        const ml = melhorLance(l)
+        if (!ml) return <span style={{ color: 'var(--tanqe-gray)' }}>—</span>
+        return <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--tanqe-orange)', fontWeight: 600 }}>{formatPrecoLitro(ml.precoLitro)}</span>
+      },
+    },
+    { key: 'status', label: 'Status', render: (l) => <Badge variant={STATUS_VARIANT[l.status]}>{STATUS_LABEL[l.status]}</Badge> },
+    {
+      key: 'tempo',
+      label: 'Tempo',
+      render: (l) => {
+        if (l.status === 'aberto') return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>encerra em {formatCountdown(l.endsAt)}</span>
+        return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--tanqe-gray)' }}>{formatData(l.createdAt)}</span>
+      },
+    },
+  ]
 
   return (
     <div style={{ display: 'grid', gap: 24 }}>
-      {/* HEADER */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 16,
-          paddingBottom: 24,
-          borderBottom: '1px solid var(--tanqe-stone)',
-        }}
-      >
-        <div>
-          <p style={eyebrow}>{leiloes.length} LEILÃ•ES Â· {ativos} ATIVOS Â· {contratados} CONTRATADOS</p>
-          <h1 style={title}>Meus leilÃµes</h1>
-          <p style={subtitle}>Gerencie suas demandas de combustÃ­vel e acompanhe lances em tempo real.</p>
-        </div>
-        <Link
-          href="/posto/novo-leilao"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'var(--tanqe-orange)',
-            color: 'var(--tanqe-white)',
-            padding: '12px 20px',
-            borderRadius: 2,
-            fontFamily: 'var(--font-display)',
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            textDecoration: 'none',
-          }}
-        >
-          <Plus size={16} strokeWidth={2.5} />
-          Novo leilÃ£o
-        </Link>
-      </div>
+      <SectionHeader
+        eyebrow={`${meus.length} leilões publicados`}
+        title="Meus leilões"
+        subtitle="Gerencie suas demandas de combustível e acompanhe lances em tempo real."
+        action={<Button href="/posto/novo-leilao" icon={Plus}>Novo leilão</Button>}
+      />
 
-      {/* LIST */}
-      {loading ? (
-        <div
-          style={{
-            padding: 80,
-            background: 'var(--tanqe-white)',
-            border: '1px solid var(--tanqe-stone)',
-            borderRadius: 4,
-            textAlign: 'center',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            textTransform: 'uppercase',
-            letterSpacing: '0.2em',
-            color: 'var(--tanqe-gray)',
-          }}
-        >
-          Carregandoâ€¦
-        </div>
-      ) : leiloes.length === 0 ? (
-        <div
-          style={{
-            padding: '80px 32px',
-            background: 'var(--tanqe-white)',
-            border: '1px solid var(--tanqe-stone)',
-            borderRadius: 4,
-            textAlign: 'center',
-          }}
-        >
-          <h3
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              fontSize: 18,
-              color: 'var(--tanqe-black)',
-              margin: 0,
-              marginBottom: 12,
-            }}
-          >
-            Nada por aqui ainda
-          </h3>
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontWeight: 300,
-              fontSize: 14,
-              color: 'var(--tanqe-gray)',
-              maxWidth: 400,
-              margin: '0 auto 24px',
-              lineHeight: 1.6,
-            }}
-          >
-            Publique seu primeiro leilÃ£o e receba lances competitivos de distribuidoras em tempo real.
-          </p>
-          <Link
-            href="/posto/novo-leilao"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'var(--tanqe-orange)',
-              color: 'var(--tanqe-white)',
-              padding: '12px 24px',
-              borderRadius: 2,
-              fontFamily: 'var(--font-display)',
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              textDecoration: 'none',
-            }}
-          >
-            <Plus size={16} strokeWidth={2.5} />
-            Publicar primeiro leilÃ£o
-          </Link>
-        </div>
-      ) : (
-        <div
-          style={{
-            background: 'var(--tanqe-white)',
-            border: '1px solid var(--tanqe-stone)',
-            borderRadius: 4,
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ overflowX: 'auto' }}>
-            <table
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--tanqe-stone)', overflowX: 'auto' }}>
+        {(['todos', 'aberto', 'aguardando_pagamento', 'em_entrega', 'concluido', 'cancelado'] as Tab[]).map((t) => {
+          const active = t === tab
+          return (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
               style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontFamily: 'var(--font-body)',
-                fontSize: 14,
+                background: 'transparent',
+                border: 'none',
+                padding: '12px 18px',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: active ? 'var(--tanqe-orange)' : 'var(--tanqe-gray)',
+                borderBottom: active ? '2px solid var(--tanqe-orange)' : '2px solid transparent',
+                marginBottom: -1,
+                whiteSpace: 'nowrap',
+                transition: 'color var(--dur-fast) var(--ease-out)',
               }}
             >
-              <thead>
-                <tr
-                  style={{
-                    background: 'var(--tanqe-cream)',
-                    borderBottom: '1px solid var(--tanqe-stone)',
-                  }}
-                >
-                  {['CombustÃ­vel', 'Volume', 'PreÃ§o teto', 'Status', 'Criado em', ''].map((h) => (
-                    <th
-                      key={h}
-                      style={{
-                        textAlign: 'left',
-                        padding: '12px 16px',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 11,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.12em',
-                        color: 'var(--tanqe-gray)',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {leiloes.map((l) => {
-                  const s = statusStyle[l.status] || statusStyle.encerrado
-                  return (
-                    <tr
-                      key={l.id}
-                      style={{ borderBottom: '1px solid var(--tanqe-stone)' }}
-                    >
-                      <td style={{ padding: '14px 16px', fontWeight: 500, color: 'var(--tanqe-black)' }}>
-                        {l.combustivel}
-                      </td>
-                      <td style={{ padding: '14px 16px', color: 'var(--tanqe-gray)' }}>
-                        {l.volume?.toLocaleString('pt-BR')} L
-                      </td>
-                      <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', color: 'var(--tanqe-black)' }}>
-                        R$ {l.preco_teto?.toFixed(2)}
-                      </td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <span
-                          style={{
-                            background: s.bg,
-                            color: s.color,
-                            padding: '4px 10px',
-                            borderRadius: 2,
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: 11,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.1em',
-                          }}
-                        >
-                          {s.label}
-                        </span>
-                      </td>
-                      <td style={{ padding: '14px 16px', color: 'var(--tanqe-gray)', fontSize: 13 }}>
-                        {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-BR') : 'â€”'}
-                      </td>
-                      <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                        <Link
-                          href={`/posto/leilao/${l.id}`}
-                          style={{
-                            color: 'var(--tanqe-orange)',
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: 11,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.1em',
-                            textDecoration: 'none',
-                          }}
-                        >
-                          Ver â†’
-                        </Link>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+              {TAB_LABELS[t]} <span style={{ opacity: 0.6 }}>({counts[t]})</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <Card padding={0}>
+        <DataTable
+          columns={cols}
+          rows={filtered}
+          rowKey={(l) => l.id}
+          onRowClick={(l) => router.push(`/posto/leilao/${l.id}`)}
+          emptyMessage="Nenhum leilão neste status."
+        />
+      </Card>
     </div>
   )
 }

@@ -1,12 +1,12 @@
-﻿'use client'
-
+'use client'
 
 export const dynamic = 'force-dynamic'
+
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { Logo } from '@/components/ui/Logo'
-import { createClient } from '@/lib/supabase/client'
+import { getRole } from '@/lib/auth'
 
 export default function DistribuidoraLayout({
   children,
@@ -17,27 +17,12 @@ export default function DistribuidoraLayout({
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    async function check() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        router.replace('/login')
-        return
-      }
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('tipo')
-        .eq('id', user.id)
-        .single()
-      if (profile?.tipo === 'posto') {
-        router.replace('/posto/dashboard')
-        return
-      }
-      setReady(true)
+    const role = getRole()
+    if (role !== 'distribuidora') {
+      router.replace(role === 'posto' ? '/posto/dashboard' : '/login')
+      return
     }
-    check()
+    setReady(true)
   }, [router])
 
   if (!ready) {

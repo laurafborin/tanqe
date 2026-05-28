@@ -12,13 +12,17 @@ import {
   User,
   Target,
   BarChart3,
+  Truck,
+  TrendingUp,
   LogOut,
   Menu,
   X,
   type LucideIcon,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/ui/Logo'
+import { Avatar } from '@/components/ui/Avatar'
+import { logout, getNome } from '@/lib/auth'
+import { useEffect } from 'react'
 
 type Role = 'posto' | 'distribuidora'
 
@@ -31,6 +35,7 @@ interface NavItem {
 const postoItems: NavItem[] = [
   { label: 'Dashboard', href: '/posto/dashboard', icon: LayoutDashboard },
   { label: 'Leilões', href: '/posto/leiloes', icon: Gavel },
+  { label: 'Pedidos', href: '/posto/pedidos', icon: Truck },
   { label: 'Contratos', href: '/posto/contratos', icon: FileText },
   { label: 'NF-es', href: '/posto/nfes', icon: Receipt },
   { label: 'Auditoria', href: '/posto/auditoria', icon: ShieldCheck },
@@ -40,6 +45,8 @@ const postoItems: NavItem[] = [
 const distItems: NavItem[] = [
   { label: 'Dashboard', href: '/distribuidora/dashboard', icon: LayoutDashboard },
   { label: 'Oportunidades', href: '/distribuidora/leiloes', icon: Target },
+  { label: 'Meus lances', href: '/distribuidora/meus-lances', icon: TrendingUp },
+  { label: 'Entregas', href: '/distribuidora/pedidos', icon: Truck },
   { label: 'Contratos', href: '/distribuidora/contratos', icon: FileText },
   { label: 'NF-es', href: '/distribuidora/nfes', icon: Receipt },
   { label: 'Analytics', href: '/distribuidora/analytics', icon: BarChart3 },
@@ -50,12 +57,15 @@ export default function Sidebar({ tipo }: { tipo: Role }) {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [nome, setNome] = useState('')
+  useEffect(() => {
+    setNome(getNome() || (tipo === 'posto' ? 'Posto Sol Nascente' : 'BR Petro SP'))
+  }, [tipo])
   const items = tipo === 'posto' ? postoItems : distItems
   const portalLabel = tipo === 'posto' ? 'Portal do Posto' : 'Portal da Distribuidora'
 
-  async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+  function handleLogout() {
+    logout()
     router.push('/login')
   }
 
@@ -154,9 +164,51 @@ export default function Sidebar({ tipo }: { tipo: Role }) {
         style={{
           marginTop: 16,
           borderTop: '1px solid rgba(255,255,255,0.06)',
-          padding: '16px 12px',
+          padding: '12px',
         }}
       >
+        {/* User card */}
+        {nome && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '8px 10px',
+              marginBottom: 8,
+            }}
+          >
+            <Avatar name={nome} size={32} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: 'var(--tanqe-white)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {nome}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 9,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.15em',
+                  color: 'var(--tanqe-gray)',
+                }}
+              >
+                {tipo === 'posto' ? 'Posto' : 'Distribuidora'}
+              </p>
+            </div>
+          </div>
+        )}
         <button
           onClick={handleLogout}
           style={{

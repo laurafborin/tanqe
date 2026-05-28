@@ -1,152 +1,178 @@
-﻿'use client'
-
+'use client'
 
 export const dynamic = 'force-dynamic'
-import { useEffect, useState } from 'react'
+
 import { use } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { Contrato } from '@/lib/types'
-import StatusBadge from '@/components/ui/StatusBadge'
-import SignaturePad from '@/components/ui/SignaturePad'
 import Link from 'next/link'
+import { Download, FileText, ShieldCheck } from 'lucide-react'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { Card } from '@/components/ui/Card'
+import { Badge, type BadgeVariant } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Avatar } from '@/components/ui/Avatar'
+import {
+  getContrato,
+  getDist,
+  getPosto,
+  getNfeByContrato,
+  getPagamentoByContrato,
+  getPedidoByContrato,
+} from '@/lib/mock-data'
+import { formatBRL, formatLitros, formatPrecoLitro, formatData, formatDataHora } from '@/lib/format'
 
-export default function ContratoDistPage({ params }: { params: Promise<{ id: string }> }) {
+const STATUS_VARIANT: Record<string, BadgeVariant> = {
+  assinado: 'concluido',
+  pendente: 'pendente',
+  cancelado: 'cancelado',
+}
+
+export default function DistContratoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const [contrato, setContrato] = useState<Contrato | null>(null)
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
-  const q = '*, posto:profiles!contratos_posto_id_fkey(*), leilao:leiloes(*), lance:lances(*, distribuidora:profiles!lances_dist_id_fkey(*))'
-
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase.from('contratos').select(q).eq('id', id).single()
-      setContrato(data)
-      setLoading(false)
-    }
-    load()
-  }, [id])
-
-  async function handleAssinar(dataUrl: string) {
-    if (!contrato) return
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const isPosto = user.id === contrato.posto_id
-    const field = isPosto ? 'assinatura_posto' : 'assinatura_dist'
-    const timeField = isPosto ? 'assinado_posto_em' : 'assinado_dist_em'
-    const otherSigned = isPosto ? contrato.assinatura_dist : contrato.assinatura_posto
-    const updates: Record<string, string> = { [field]: dataUrl, [timeField]: new Date().toISOString() }
-    if (otherSigned) updates.status = 'assinado'
-    else updates.status = isPosto ? 'assinado_posto' : 'assinado_distribuidora'
-    await supabase.from('contratos').update(updates).eq('id', id)
-    if (updates.status === 'assinado') {
-      await supabase.from('pagamentos').insert({ contrato_id: id, valor: contrato.valor, status: 'pendente', metodo: 'pix' })
-    }
-    const { data: updated } = await supabase.from('contratos').select(q).eq('id', id).single()
-    setContrato(updated)
-    alert('Assinatura registrada!')
+  const contrato = getContrato(id)
+  if (!contrato) {
+    return <div style={{ padding: 32 }}><Card><p style={{ fontFamily: 'var(--font-body)', color: 'var(--tanqe-gray)' }}>Contrato não encontrado.</p></Card></div>
   }
-
-  if (loading) return <div className="space-y-4">{[1,2,3].map(i=><div key={i} className="h-32 bg-gray-100 rounded-2xl animate-pulse"/>)}</div>
-  if (!contrato) return <p className="text-gray-400">Contrato nao encontrado</p>
-
-  const clausulas = contrato.clausulas || [
-    'Fornecimento conforme especificacoes ANP.',
-    `Volume: ${contrato.leilao?.volume?.toLocaleString()} litros.`,
-    `Preco: R$ ${contrato.lance?.preco?.toFixed(3)}/L. Total: R$ ${contrato.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
-    'Pagamento via PIX apos entrega.',
-    'Termos da plataforma TANQE.',
-  ]
+  const posto = getPosto(contrato.postoId)
+  const dist = getDist(contrato.distId)
+  const nfe = getNfeByContrato(contrato.id)
+  const pagamento = getPagamentoByContrato(contrato.id)
+  const pedido = getPedidoByContrato(contrato.id)
 
   return (
-    <div className="max-w-3xl">
-      <div className="text-sm text-gray-400 mb-1">
-        <Link href="/distribuidora/contratos" className="hover:text-[#E8621A]">Contratos</Link>
-        <span className="mx-1.5 text-gray-300">/</span>
-        <span className="text-gray-700 font-medium">Detalhe</span>
-      </div>
+    <div style={{ display: 'grid', gap: 24 }}>
+      <Link href="/distribuidora/contratos" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', textDecoration: 'none' }}>← Voltar pra contratos</Link>
 
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <span className="bg-gray-100 text-gray-600 rounded-lg px-3 py-1 text-xs font-mono">CT-{id.slice(0, 8).toUpperCase()}</span>
-        <h1 className="text-2xl font-bold text-gray-900">Contrato de Fornecimento</h1>
-        <StatusBadge status={contrato.status} />
-      </div>
-
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="pr-6 border-r border-gray-100">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Comprador</p>
-            <p className="text-lg font-semibold text-gray-900 mt-2">{contrato.posto?.nome}</p>
-            <p className="text-sm text-gray-500 font-mono">{contrato.posto?.cnpj || 'â€”'}</p>
-            <p className="text-sm text-gray-400">{contrato.posto?.cidade}/{contrato.posto?.estado}</p>
+      <SectionHeader
+        eyebrow={`Contrato ${contrato.numero}`}
+        title="Acordo de fornecimento"
+        subtitle="Documento vinculante entre sua distribuidora e o posto comprador."
+        action={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Badge variant={STATUS_VARIANT[contrato.status]}>{contrato.status === 'assinado' ? 'Assinado' : contrato.status === 'pendente' ? 'Pendente' : 'Cancelado'}</Badge>
+            <Button variant="secondary" icon={Download} size="sm">Baixar PDF</Button>
           </div>
+        }
+      />
+
+      <div style={{ background: 'var(--tanqe-white)', border: '1px solid var(--tanqe-stone)', borderRadius: 4, padding: '48px' }}>
+        <div style={{ textAlign: 'center', borderBottom: '1px solid var(--tanqe-stone)', paddingBottom: 24, marginBottom: 32 }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--tanqe-gray)', margin: 0 }}>TANQE · Contrato de fornecimento</p>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-0.02em', margin: '8px 0 4px' }}>{contrato.numero}</h2>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)', margin: 0 }}>Hash SHA-256: {contrato.hashContrato.slice(0, 32)}…</p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 32, marginBottom: 32 }}>
+          <PartieBlock title="Contratada (você)" entity={dist} role="Distribuidora" />
+          <PartieBlock title="Contratante" entity={posto} role="Posto" />
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 16 }}>1. Objeto</p>
+          <div style={{ background: 'var(--tanqe-cream)', padding: 20, borderRadius: 4, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
+            <KV label="Produto" value={contrato.combustivel} />
+            <KV label="Volume" value={formatLitros(contrato.volume)} />
+            <KV label="Preço por litro" value={formatPrecoLitro(contrato.precoLitro)} mono />
+            <KV label="Receita total" value={formatBRL(contrato.valor)} highlight />
+            <KV label="Pagamento" value={contrato.formaPagamento} />
+            <KV label="Prazo entrega" value={`${contrato.prazoEntregaDias} dias`} />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 16 }}>2. Cláusulas</p>
+          <ol style={{ paddingLeft: 24, margin: 0 }}>
+            {contrato.clausulas.map((c, i) => (
+              <li key={i} style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--tanqe-black)', lineHeight: 1.7, marginBottom: 10 }}>{c}</li>
+            ))}
+          </ol>
+        </div>
+
+        <div style={{ paddingTop: 24, borderTop: '1px solid var(--tanqe-stone)' }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 16 }}>3. Assinaturas digitais</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+            <SignatureBlock title="Distribuidora" entityName={dist?.nome || '—'} signedAt={contrato.assinadoDistEm} />
+            <SignatureBlock title="Posto" entityName={posto?.nome || '—'} signedAt={contrato.assinadoPostoEm} />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+        {nfe && (
+          <Card>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 6 }}>NF-e emitida</p>
+            <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, margin: 0 }}>nº {String(nfe.numero).padStart(6, '0')}</p>
+            <Link href="/distribuidora/nfes" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-orange)', textDecoration: 'none', display: 'inline-block', marginTop: 8 }}>ver detalhes →</Link>
+          </Card>
+        )}
+        {pagamento && (
+          <Card>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 6 }}>Pagamento</p>
+            <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, margin: 0 }}>{pagamento.status === 'pago' ? 'Recebido' : 'A receber'}</p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)', margin: '4px 0 0' }}>
+              {pagamento.pagoEm ? formatDataHora(pagamento.pagoEm) : `vence ${formatData(pagamento.vencimento)}`}
+            </p>
+          </Card>
+        )}
+        {pedido && (
+          <Card>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 6 }}>Entrega</p>
+            <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, margin: 0 }}>{pedido.status === 'entregue' ? 'Entregue' : 'Em trânsito'}</p>
+            <Link href="/distribuidora/pedidos" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-orange)', textDecoration: 'none', display: 'inline-block', marginTop: 8 }}>rastrear →</Link>
+          </Card>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PartieBlock({ title, entity, role }: { title: string; entity?: { nome: string; razaoSocial: string; cnpj: string; endereco: string; cidade: string; uf: string }; role: string }) {
+  return (
+    <div>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 8 }}>{title} · {role}</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        <Avatar name={entity?.nome || '?'} size={36} />
+        <div>
+          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, margin: 0 }}>{entity?.nome ?? '—'}</p>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--tanqe-gray)', margin: 0 }}>{entity?.razaoSocial ?? '—'}</p>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', rowGap: 6, columnGap: 12, fontFamily: 'var(--font-body)', fontSize: 12 }}>
+        <span style={{ color: 'var(--tanqe-gray)' }}>CNPJ</span><span style={{ fontFamily: 'var(--font-mono)' }}>{entity?.cnpj ?? '—'}</span>
+        <span style={{ color: 'var(--tanqe-gray)' }}>Endereço</span><span>{entity ? `${entity.endereco} — ${entity.cidade}/${entity.uf}` : '—'}</span>
+      </div>
+    </div>
+  )
+}
+
+function SignatureBlock({ title, entityName, signedAt }: { title: string; entityName: string; signedAt?: string }) {
+  const isSigned = !!signedAt
+  return (
+    <div style={{ padding: 18, border: '1px solid var(--tanqe-stone)', borderRadius: 4 }}>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 8 }}>{title}</p>
+      <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, margin: 0, marginBottom: 12 }}>{entityName}</p>
+      {isSigned ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ShieldCheck size={18} color="var(--tanqe-success)" />
           <div>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Vendedor</p>
-            <p className="text-lg font-semibold text-gray-900 mt-2">{contrato.lance?.distribuidora?.nome}</p>
-            <p className="text-sm text-gray-500 font-mono">{contrato.lance?.distribuidora?.cnpj || 'â€”'}</p>
-            <p className="text-sm text-gray-400">{contrato.lance?.distribuidora?.cidade}/{contrato.lance?.distribuidora?.estado}</p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-success)', margin: 0, fontWeight: 600 }}>Assinado digitalmente</p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--tanqe-gray)', margin: 0 }}>{formatDataHora(signedAt!)}</p>
           </div>
         </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Objeto</p>
-        <div className="grid grid-cols-3 gap-6">
-          <div><p className="text-xs text-gray-400">Produto</p><p className="text-base font-semibold">{contrato.leilao?.combustivel}</p></div>
-          <div><p className="text-xs text-gray-400">Volume</p><p className="text-base font-semibold">{contrato.leilao?.volume?.toLocaleString()} L</p></div>
-          <div><p className="text-xs text-gray-400">Valor Total</p><p className="text-xl font-bold text-[#E8621A]">R$ {contrato.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p></div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Clausulas</p>
-        {(clausulas as string[]).map((c: string, i: number) => (
-          <div key={i} className="flex gap-3 py-3 border-b border-gray-50 last:border-0">
-            <span className="text-[#E8621A] font-mono font-bold text-sm min-w-[24px]">{i + 1}.</span>
-            <p className="text-sm text-gray-700 leading-relaxed">{c}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-4">Assinaturas</p>
-        <div className="grid grid-cols-2 gap-6">
-          {(['posto', 'dist'] as const).map(lado => {
-            const signed = lado === 'posto' ? contrato.assinatura_posto : contrato.assinatura_dist
-            const time = lado === 'posto' ? contrato.assinado_posto_em : contrato.assinado_dist_em
-            return (
-              <div key={lado} className="border border-gray-100 rounded-xl p-6 text-center">
-                <p className="text-xs text-gray-500 mb-3">{lado === 'posto' ? 'Comprador' : 'Vendedor'}</p>
-                {signed ? (
-                  <>
-                    <svg width="32" height="32" className="mx-auto text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <p className="text-sm font-medium text-green-700 mt-2">Assinado</p>
-                    {time && <p className="text-xs text-gray-400">{new Date(time).toLocaleDateString('pt-BR')}</p>}
-                  </>
-                ) : (
-                  <>
-                    <svg width="32" height="32" className="mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <p className="text-sm text-gray-400 italic mt-2">Aguardando</p>
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {contrato.status !== 'assinado' && contrato.status !== 'concluido' && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
-          <p className="font-semibold text-sm mb-3">Assinar Contrato</p>
-          <SignaturePad onSave={handleAssinar} />
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <FileText size={18} color="var(--tanqe-warning)" />
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-warning)', margin: 0, fontWeight: 600 }}>Aguardando assinatura</p>
         </div>
       )}
+    </div>
+  )
+}
 
-      {contrato.hash_contrato && (
-        <div className="bg-gray-50 rounded-xl p-4">
-          <p className="text-[10px] uppercase tracking-widest text-gray-400">SHA-256</p>
-          <p className="font-mono text-xs text-gray-500 break-all mt-1">{contrato.hash_contrato}</p>
-        </div>
-      )}
+function KV({ label, value, mono, highlight }: { label: string; value: string; mono?: boolean; highlight?: boolean }) {
+  return (
+    <div>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', margin: 0, marginBottom: 4 }}>{label}</p>
+      <p style={{ fontFamily: mono ? 'var(--font-mono)' : 'var(--font-body)', fontSize: 14, fontWeight: 600, color: highlight ? 'var(--tanqe-orange)' : 'var(--tanqe-black)', margin: 0 }}>{value}</p>
     </div>
   )
 }

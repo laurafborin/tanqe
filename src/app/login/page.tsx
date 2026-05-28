@@ -1,44 +1,35 @@
-﻿'use client'
-
+'use client'
 
 export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/ui/Logo'
+import { loginAs, type Role } from '@/lib/auth'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const [erro, setErro] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
+
+  function go(role: Role) {
+    setLoading(true)
+    loginAs(role)
+    router.push(role === 'posto' ? '/posto/dashboard' : '/distribuidora/dashboard')
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    setErro('')
-    setLoading(true)
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
-    if (error) {
-      setErro(error.message)
-      setLoading(false)
-      return
-    }
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('tipo')
-      .eq('id', data.user.id)
-      .single()
-    router.push(
-      profile?.tipo === 'distribuidora' ? '/distribuidora/dashboard' : '/posto/dashboard',
-    )
+    const role: Role = email.toLowerCase().includes('distribuidora') ? 'distribuidora' : 'posto'
+    go(role)
   }
 
-  function fillDemo(role: 'posto' | 'distribuidora') {
+  function fillDemo(role: Role) {
     setEmail(role === 'posto' ? 'posto@tanqe.com.br' : 'distribuidora@tanqe.com.br')
     setSenha('123456')
+    go(role)
   }
 
   const labelStyle = {
@@ -75,7 +66,7 @@ export default function LoginPage() {
       }}
       className="login-grid"
     >
-      {/* LEFT â€” visual */}
+      {/* LEFT — visual */}
       <div
         style={{
           display: 'flex',
@@ -126,7 +117,7 @@ export default function LoginPage() {
               margin: 0,
             }}
           >
-            Negocie combustÃ­vel com inteligÃªncia. Em tempo real. Com dados.
+            Negocie combustível com inteligência. Em tempo real. Com dados.
           </p>
         </div>
         <Link
@@ -143,11 +134,11 @@ export default function LoginPage() {
             textDecoration: 'none',
           }}
         >
-          â† Voltar
+          ← Voltar
         </Link>
       </div>
 
-      {/* RIGHT â€” form */}
+      {/* RIGHT — form */}
       <div
         style={{
           display: 'flex',
@@ -178,7 +169,7 @@ export default function LoginPage() {
               marginBottom: 12,
             }}
           >
-            Acesso Ã  plataforma
+            Acesso à plataforma
           </p>
           <h1
             style={{
@@ -194,23 +185,6 @@ export default function LoginPage() {
             Entrar
           </h1>
 
-          {erro && (
-            <div
-              style={{
-                padding: 12,
-                background: 'rgba(194, 63, 6, 0.15)',
-                border: '1px solid rgba(194, 63, 6, 0.4)',
-                color: 'var(--tanqe-orange-light)',
-                fontSize: 13,
-                fontFamily: 'var(--font-body)',
-                borderRadius: 2,
-                marginBottom: 20,
-              }}
-            >
-              {erro}
-            </div>
-          )}
-
           <form onSubmit={handleLogin}>
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>E-mail</label>
@@ -218,7 +192,6 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 placeholder="seu@email.com"
                 style={inputStyle}
                 onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--tanqe-orange)')}
@@ -231,8 +204,7 @@ export default function LoginPage() {
                 type="password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                required
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••"
                 style={inputStyle}
                 onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--tanqe-orange)')}
                 onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
@@ -257,7 +229,7 @@ export default function LoginPage() {
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              {loading ? 'Entrando...' : 'Entrar â†’'}
+              {loading ? 'Entrando…' : 'Entrar →'}
             </button>
           </form>
 
@@ -327,6 +299,22 @@ export default function LoginPage() {
               <span style={{ color: 'var(--tanqe-gray)', fontSize: 10 }}>distribuidora@tanqe.com.br</span>
             </button>
           </div>
+
+          <p
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: 'var(--tanqe-gray)',
+              marginTop: 24,
+              marginBottom: 0,
+              textAlign: 'center',
+              lineHeight: 1.8,
+            }}
+          >
+            Acesso de demonstração TANQE
+          </p>
         </div>
       </div>
 
