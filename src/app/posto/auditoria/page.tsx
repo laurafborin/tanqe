@@ -1,12 +1,12 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Contrato } from '@/lib/types'
 import { auditarContratos, brl, pct, ANP_REFERENCIA_DATA, type AuditoriaResumo } from '@/lib/anp'
-import MetricCard from '@/components/MetricCard'
-import { Icons } from '@/components/SvgIcons'
-import { SkeletonMetric, SkeletonTable } from '@/components/Skeleton'
+import MetricCard from '@/components/ui/MetricCard'
+import { Icons } from '@/components/ui/SvgIcons'
+import { SkeletonMetric, SkeletonTable } from '@/components/ui/Skeleton'
 
 export default function AuditoriaPage() {
   const [resumo, setResumo] = useState<AuditoriaResumo | null>(null)
@@ -33,8 +33,8 @@ export default function AuditoriaPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Auditoria de Economia</h1>
         <p className="text-gray-500 text-sm mt-1">
-          Quanto a plataforma economizou de verdade — medido contra o seu preço-teto e a
-          referência ANP de distribuição.
+          Quanto a plataforma economizou de verdade â€” medido contra o seu preÃ§o-teto e a
+          referÃªncia ANP de distribuiÃ§Ã£o.
         </p>
       </div>
 
@@ -47,11 +47,11 @@ export default function AuditoriaPage() {
         <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white rounded-2xl border border-gray-100">
           <div className="text-gray-200">{Icons.calculator}</div>
           <p className="text-lg font-medium text-gray-400">Nenhum contrato fechado para auditar ainda</p>
-          <p className="text-sm text-gray-400">Feche um leilão e a economia aparecerá aqui automaticamente.</p>
+          <p className="text-sm text-gray-400">Feche um leilÃ£o e a economia aparecerÃ¡ aqui automaticamente.</p>
         </div>
       ) : (
         <>
-          {/* Métricas */}
+          {/* MÃ©tricas */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <MetricCard
               label="Economia vs. ANP"
@@ -61,7 +61,7 @@ export default function AuditoriaPage() {
               sub={`em ${resumo.cobertosPorAnp} contrato(s)`}
             />
             <MetricCard
-              label="Desconto médio"
+              label="Desconto mÃ©dio"
               value={pct(resumo.descontoMedioAnp)}
               icon={Icons.trending}
               iconBg="bg-[#FFF1E8] text-[#E8621A]"
@@ -72,7 +72,7 @@ export default function AuditoriaPage() {
               value={brl(resumo.economiaTetoTotal)}
               icon={Icons.target}
               iconBg="bg-blue-50 text-blue-500"
-              sub="vs. preço máximo definido"
+              sub="vs. preÃ§o mÃ¡ximo definido"
             />
             <MetricCard
               label="Volume auditado"
@@ -89,7 +89,7 @@ export default function AuditoriaPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-gray-500">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium">Combustível</th>
+                    <th className="text-left px-4 py-3 font-medium">CombustÃ­vel</th>
                     <th className="text-right px-4 py-3 font-medium">Volume</th>
                     <th className="text-right px-4 py-3 font-medium">Pago / L</th>
                     <th className="text-right px-4 py-3 font-medium">Ref. ANP / L</th>
@@ -107,7 +107,7 @@ export default function AuditoriaPage() {
                         <td className="px-4 py-3 text-right text-gray-600">{it.volume.toLocaleString('pt-BR')} L</td>
                         <td className="px-4 py-3 text-right font-mono text-gray-900">R$ {it.precoLitro.toFixed(3)}</td>
                         <td className="px-4 py-3 text-right font-mono text-gray-400">
-                          {it.refAnp ? `R$ ${it.refAnp.toFixed(2)}` : '—'}
+                          {it.refAnp ? `R$ ${it.refAnp.toFixed(2)}` : 'â€”'}
                         </td>
                         <td className="px-4 py-3 text-right">
                           {temAnp ? (
@@ -123,11 +123,11 @@ export default function AuditoriaPage() {
                               </span>
                             </div>
                           ) : (
-                            <span className="text-gray-300">—</span>
+                            <span className="text-gray-300">â€”</span>
                           )}
                         </td>
                         <td className={`px-4 py-3 text-right font-semibold ${positivo ? 'text-green-600' : 'text-red-500'}`}>
-                          {temAnp ? brl(it.economiaAnpRS as number) : '—'}
+                          {temAnp ? brl(it.economiaAnpRS as number) : 'â€”'}
                         </td>
                       </tr>
                     )
@@ -151,12 +151,12 @@ export default function AuditoriaPage() {
           <div className="mt-6 bg-[#FFF1E8] border border-[#E8621A]/10 rounded-2xl p-5 text-sm text-gray-600 flex gap-3">
             <div className="text-[#E8621A] flex-shrink-0">{Icons.alert}</div>
             <div>
-              <p className="font-semibold text-gray-800 mb-1">Como a economia é calculada</p>
+              <p className="font-semibold text-gray-800 mb-1">Como a economia Ã© calculada</p>
               <p>
-                Para cada contrato, o preço efetivamente pago por litro (valor ÷ volume) é
-                comparado à referência de distribuição da ANP para aquele combustível. A
-                economia é a diferença multiplicada pelo volume contratado. O desconto médio é
-                ponderado pelo volume de cada negociação. Fonte da referência: {ANP_REFERENCIA_DATA}.
+                Para cada contrato, o preÃ§o efetivamente pago por litro (valor Ã· volume) Ã©
+                comparado Ã  referÃªncia de distribuiÃ§Ã£o da ANP para aquele combustÃ­vel. A
+                economia Ã© a diferenÃ§a multiplicada pelo volume contratado. O desconto mÃ©dio Ã©
+                ponderado pelo volume de cada negociaÃ§Ã£o. Fonte da referÃªncia: {ANP_REFERENCIA_DATA}.
               </p>
             </div>
           </div>

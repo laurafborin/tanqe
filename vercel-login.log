@@ -1,0 +1,19 @@
+﻿node.exe : WARNING! The following arguments are deprecated: laurafborin@gmail.com
+No C:\Users\laura\AppData\Roaming\npm\vercel.ps1:24 caractere:5
++     & "node$exe"  "$basedir/node_modules/vercel/dist/vc.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (WARNING! The fo...borin@gmail.com:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Read more in our changelog (https://vercel.com/changelog/new-vercel-cli-login-flow).
+> 
+  Visit https://vercel.com/oauth/device?user_code=TTQG-PDZK
+
+Waiting for authentication...
+[2K[1A[2K[G
+  Congratulations! You are now signed in.
+
+  To deploy something, run `vercel`.
+
+  💡 To deploy every commit automatically,
+  connect a Git Repository (vercel.link/git (https://vercel.link/git)).

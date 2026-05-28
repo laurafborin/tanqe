@@ -1,12 +1,81 @@
 'use client'
 
-import Sidebar from '@/components/Sidebar'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Sidebar from '@/components/layout/Sidebar'
+import { Logo } from '@/components/ui/Logo'
+import { createClient } from '@/lib/supabase/client'
 
-export default function DistribuidoraLayout({ children }: { children: React.ReactNode }) {
+export default function DistribuidoraLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const router = useRouter()
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    async function check() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        router.replace('/login')
+        return
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tipo')
+        .eq('id', user.id)
+        .single()
+      if (profile?.tipo === 'posto') {
+        router.replace('/posto/dashboard')
+        return
+      }
+      setReady(true)
+    }
+    check()
+  }, [router])
+
+  if (!ready) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--tanqe-charcoal)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'pulse 1.6s ease-in-out infinite',
+        }}
+      >
+        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }`}</style>
+        <Logo variant="light-orange" size="md" />
+      </div>
+    )
+  }
+
   return (
-    <div className="flex min-h-screen">
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--tanqe-cream)' }}>
       <Sidebar tipo="distribuidora" />
-      <main className="flex-1 p-4 lg:p-6 bg-bg pt-16 lg:pt-6">{children}</main>
+      <main
+        style={{
+          flex: 1,
+          marginLeft: 240,
+          padding: '32px 48px',
+          background: 'var(--tanqe-cream)',
+          minHeight: '100vh',
+        }}
+        className="tanqe-main"
+      >
+        {children}
+      </main>
+      <style>{`
+        @media (max-width: 1023px) {
+          .tanqe-main { margin-left: 0 !important; padding: 80px 24px 32px !important; }
+        }
+      `}</style>
     </div>
   )
 }

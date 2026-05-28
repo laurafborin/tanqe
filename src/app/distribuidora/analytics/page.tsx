@@ -1,13 +1,13 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import MetricCard from '@/components/MetricCard'
-import { Icons } from '@/components/SvgIcons'
-import { SkeletonMetric, SkeletonCard } from '@/components/Skeleton'
+import MetricCard from '@/components/ui/MetricCard'
+import { Icons } from '@/components/ui/SvgIcons'
+import { SkeletonMetric, SkeletonCard } from '@/components/ui/Skeleton'
 
 const regionPerformance = [
-  { regiao: 'Grande São Paulo', deals: 42, volume: '189k L', receita: 'R$ 1,1M', roi: '23.5%', pct: 100 },
+  { regiao: 'Grande SÃ£o Paulo', deals: 42, volume: '189k L', receita: 'R$ 1,1M', roi: '23.5%', pct: 100 },
   { regiao: 'Interior SP', deals: 28, volume: '126k L', receita: 'R$ 735k', roi: '18.2%', pct: 67 },
   { regiao: 'Litoral SP', deals: 15, volume: '67k L', receita: 'R$ 391k', roi: '15.8%', pct: 36 },
   { regiao: 'Sul', deals: 10, volume: '45k L', receita: 'R$ 262k', roi: '12.4%', pct: 24 },
@@ -15,9 +15,9 @@ const regionPerformance = [
 ]
 
 const insights = [
-  { tipo: 'warning' as const, titulo: 'Alerta de Mercado', texto: 'Perda de participação no Interior SP — concorrentes reduziram preços em 2.3% nas últimas 4 semanas.' },
-  { tipo: 'success' as const, titulo: 'Oportunidade', texto: 'Compras coletivas convertem 40% mais. Priorize leilões multi-posto na Grande SP.' },
-  { tipo: 'info' as const, titulo: 'Simulação', texto: 'Redução de 1.5% no Diesel S-10 projeta aumento de 22% no volume na região metropolitana.' },
+  { tipo: 'warning' as const, titulo: 'Alerta de Mercado', texto: 'Perda de participaÃ§Ã£o no Interior SP â€” concorrentes reduziram preÃ§os em 2.3% nas Ãºltimas 4 semanas.' },
+  { tipo: 'success' as const, titulo: 'Oportunidade', texto: 'Compras coletivas convertem 40% mais. Priorize leilÃµes multi-posto na Grande SP.' },
+  { tipo: 'info' as const, titulo: 'SimulaÃ§Ã£o', texto: 'ReduÃ§Ã£o de 1.5% no Diesel S-10 projeta aumento de 22% no volume na regiÃ£o metropolitana.' },
 ]
 
 const insightStyles = {
@@ -66,8 +66,8 @@ export default function AnalyticsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Inteligência de Mercado</h1>
-        <p className="text-sm text-gray-500 mt-1">Análise de performance e oportunidades</p>
+        <h1 className="text-2xl font-bold text-gray-900">InteligÃªncia de Mercado</h1>
+        <p className="text-sm text-gray-500 mt-1">AnÃ¡lise de performance e oportunidades</p>
       </div>
 
       {loading ? (
@@ -81,18 +81,18 @@ export default function AnalyticsPage() {
             <MetricCard label="Marketshare" value="34.2%" icon={Icons.pie} iconBg="bg-[#FFF1E8] text-[#E8621A]" />
             <MetricCard label="Volume Negociado" value={`${(totalReceita / 5.5).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} L`} icon={Icons.truck} iconBg="bg-blue-50 text-blue-400" />
             <MetricCard label="Receita Acumulada" value={`R$ ${totalReceita.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`} icon={Icons.dollar} iconBg="bg-green-50 text-green-400" />
-            <MetricCard label="Taxa de Conversão" value={`${contratos.length} deals`} icon={Icons.target} iconBg="bg-purple-50 text-purple-400" />
+            <MetricCard label="Taxa de ConversÃ£o" value={`${contratos.length} deals`} icon={Icons.target} iconBg="bg-purple-50 text-purple-400" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-            {/* Tabela Performance por Região */}
+            {/* Tabela Performance por RegiÃ£o */}
             <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 p-6 transition-all duration-200 hover:shadow-md">
-              <h2 className="font-semibold text-gray-900 mb-4">Performance por Região</h2>
+              <h2 className="font-semibold text-gray-900 mb-4">Performance por RegiÃ£o</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      <th className="text-left pb-3">Região</th>
+                      <th className="text-left pb-3">RegiÃ£o</th>
                       <th className="text-left pb-3">Deals</th>
                       <th className="text-left pb-3">Volume</th>
                       <th className="text-left pb-3">Receita</th>
@@ -121,17 +121,17 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* KPIs de Eficiência */}
+            {/* KPIs de EficiÃªncia */}
             <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 transition-all duration-200 hover:shadow-md">
-              <h2 className="font-semibold text-gray-900 mb-4">Eficiência Operacional</h2>
+              <h2 className="font-semibold text-gray-900 mb-4">EficiÃªncia Operacional</h2>
               <div className="space-y-4">
                 {[
-                  { label: 'Ticket Médio', value: `R$ ${ticketMedio.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}` },
-                  { label: 'Margem Líquida', value: '12.4%' },
-                  { label: 'Economia Logística/mês', value: 'R$ 8.200' },
-                  { label: 'Custo Oportunidade', value: '3 leilões perdidos' },
-                  { label: 'Prazo Médio Entrega', value: '4.2 dias' },
-                  { label: 'Preço Médio/L', value: `R$ ${margemMedia.toFixed(3)}` },
+                  { label: 'Ticket MÃ©dio', value: `R$ ${ticketMedio.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}` },
+                  { label: 'Margem LÃ­quida', value: '12.4%' },
+                  { label: 'Economia LogÃ­stica/mÃªs', value: 'R$ 8.200' },
+                  { label: 'Custo Oportunidade', value: '3 leilÃµes perdidos' },
+                  { label: 'Prazo MÃ©dio Entrega', value: '4.2 dias' },
+                  { label: 'PreÃ§o MÃ©dio/L', value: `R$ ${margemMedia.toFixed(3)}` },
                 ].map((kpi) => (
                   <div key={kpi.label} className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">{kpi.label}</span>
@@ -145,7 +145,7 @@ export default function AnalyticsPage() {
           {/* Market Share */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div className="bg-white rounded-2xl border border-gray-100 p-6 transition-all duration-200 hover:shadow-md">
-              <h2 className="font-semibold mb-4">Market Share por Combustível</h2>
+              <h2 className="font-semibold mb-4">Market Share por CombustÃ­vel</h2>
               <div className="space-y-3">
                 {['Gasolina Comum', 'Diesel S10', 'Etanol', 'Gasolina Aditivada'].map((comb) => {
                   const count = contratos.filter(c => c.leilao?.combustivel === comb).length
@@ -166,7 +166,7 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-6 transition-all duration-200 hover:shadow-md">
-              <h2 className="font-semibold mb-4">Alcance por Região</h2>
+              <h2 className="font-semibold mb-4">Alcance por RegiÃ£o</h2>
               <div className="space-y-3">
                 {regionPerformance.map((r) => (
                   <div key={r.regiao} className="flex items-center gap-3">
@@ -183,7 +183,7 @@ export default function AnalyticsPage() {
 
           {/* Insights IA */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 transition-all duration-200 hover:shadow-md">
-            <h2 className="font-semibold mb-4">Recomendações Estratégicas</h2>
+            <h2 className="font-semibold mb-4">RecomendaÃ§Ãµes EstratÃ©gicas</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {insights.map((insight, i) => (
                 <div key={i} className={`p-4 rounded-xl ${insightStyles[insight.tipo]}`}>

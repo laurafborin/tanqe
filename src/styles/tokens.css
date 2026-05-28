@@ -1,0 +1,44 @@
+:root {
+  /* Cores primárias */
+  --tanqe-orange: #E8581A;
+  --tanqe-orange-light: #F4874A;
+  --tanqe-orange-deep: #C23F06;
+  --tanqe-orange-pale: #FDF0EA;
+  --tanqe-orange-mid: #F9C9AE;
+
+  /* Neutros */
+  --tanqe-black: #0F0F0E;
+  --tanqe-charcoal: #1C1B19;
+  --tanqe-slate: #2E2D2A;
+  --tanqe-gray: #7A7870;
+  --tanqe-gray-light: #C4C2BB;
+  --tanqe-stone: #E9E7E1;
+  --tanqe-cream: #F7F5F1;
+  --tanqe-white: #FFFFFF;
+
+  /* Status */
+  --tanqe-success: #2E7D32;
+  --tanqe-warning: #D4831A;
+  --tanqe-danger: #C23F06;
+
+  /* Tipografia (usa fallbacks do system até next/font carregar) */
+  --font-display: var(--font-display-loaded), 'Syne', sans-serif;
+  --font-body: var(--font-body-loaded), 'DM Sans', sans-serif;
+  --font-mono: var(--font-mono-loaded), 'DM Mono', monospace;
+
+  /* Espaçamento (8pt grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Bordas */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+}

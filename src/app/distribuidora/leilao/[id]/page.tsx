@@ -1,12 +1,12 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Leilao, Lance } from '@/lib/types'
-import Countdown from '@/components/Countdown'
-import StatusBadge from '@/components/StatusBadge'
-import Stars from '@/components/Stars'
+import Countdown from '@/components/ui/Countdown'
+import StatusBadge from '@/components/ui/StatusBadge'
+import Stars from '@/components/ui/Stars'
 import Link from 'next/link'
 
 export default function DistribuidoraLeilaoPage({ params }: { params: Promise<{ id: string }> }) {

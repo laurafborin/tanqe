@@ -1,9 +1,9 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Nfe } from '@/lib/types'
-import StatusBadge from '@/components/StatusBadge'
+import StatusBadge from '@/components/ui/StatusBadge'
 
 export default function NfesPostoPage() {
   const [nfes, setNfes] = useState<Nfe[]>([])

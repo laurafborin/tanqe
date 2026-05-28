@@ -1,13 +1,13 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Leilao, Lance } from '@/lib/types'
-import Countdown from '@/components/Countdown'
-import StatusBadge from '@/components/StatusBadge'
-import Stars from '@/components/Stars'
-import MiniMap from '@/components/MiniMap'
+import Countdown from '@/components/ui/Countdown'
+import StatusBadge from '@/components/ui/StatusBadge'
+import Stars from '@/components/ui/Stars'
+import MiniMap from '@/components/map/MiniMap'
 import Link from 'next/link'
 
 export default function LeilaoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
@@ -105,7 +105,7 @@ export default function LeilaoDetalhePage({ params }: { params: Promise<{ id: st
         <h2 className="text-lg font-semibold text-gray-900">Propostas Recebidas</h2>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs text-gray-400">Atualização em tempo real</span>
+          <span className="text-xs text-gray-400">AtualizaÃ§Ã£o em tempo real</span>
         </div>
       </div>
 

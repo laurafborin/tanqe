@@ -1,9 +1,9 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Pagamento } from '@/lib/types'
-import StatusBadge from '@/components/StatusBadge'
+import StatusBadge from '@/components/ui/StatusBadge'
 import Link from 'next/link'
 
 export default function PagamentosPostoPage() {

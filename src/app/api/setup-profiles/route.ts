@@ -7,7 +7,7 @@ export async function POST() {
   )
 
   const profilesMap: Record<string, Record<string, unknown>> = {
-    'isabela@fuelbid.com': {
+    'isabela@tanqe.com.br': {
       tipo: 'posto',
       nome: 'Isabela Garcia',
       cidade: 'São Paulo',
@@ -16,7 +16,7 @@ export async function POST() {
       lng: -46.656,
       score: 5.0,
     },
-    'leticia@fuelbid.com': {
+    'leticia@tanqe.com.br': {
       tipo: 'posto',
       nome: 'Letícia Dias',
       cidade: 'São Paulo',
@@ -25,7 +25,7 @@ export async function POST() {
       lng: -46.662,
       score: 5.0,
     },
-    'laura@fuelbid.com': {
+    'laura@tanqe.com.br': {
       tipo: 'posto',
       nome: 'Laura Borin',
       cidade: 'São Paulo',
@@ -34,16 +34,16 @@ export async function POST() {
       lng: -46.650,
       score: 5.0,
     },
-    'fuelbid@fuelbid.com': {
+    'fuelbid@tanqe.com.br': {
       tipo: 'posto',
-      nome: 'Tanqe Institucional',
+      nome: 'TANQE Institucional',
       cidade: 'São Paulo',
       estado: 'SP',
       lat: -23.555,
       lng: -46.640,
       score: 5.0,
     },
-    'posto@fuelbid.com': {
+    'posto@tanqe.com.br': {
       tipo: 'posto',
       nome: 'Auto Posto Estrela do Sul LTDA',
       cnpj: '12.345.678/0001-90',
@@ -57,7 +57,7 @@ export async function POST() {
       score: 4.6,
       total_deals: 23,
     },
-    'distribuidora@fuelbid.com': {
+    'distribuidora@tanqe.com.br': {
       tipo: 'distribuidora',
       nome: 'PetroBrasil Distribuidora S.A.',
       cnpj: '34.567.890/0001-12',

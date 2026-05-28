@@ -1,11 +1,11 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Contrato } from '@/lib/types'
-import StatusBadge from '@/components/StatusBadge'
-import SignaturePad from '@/components/SignaturePad'
+import StatusBadge from '@/components/ui/StatusBadge'
+import SignaturePad from '@/components/ui/SignaturePad'
 import Link from 'next/link'
 
 export default function ContratoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
@@ -52,7 +52,7 @@ export default function ContratoDetalhePage({ params }: { params: Promise<{ id: 
     `Volume de ${contrato.leilao?.volume?.toLocaleString()} litros a ser entregue conforme prazo do leilao.`,
     `Preco acordado de R$ ${contrato.lance?.preco?.toFixed(3)}/L, totalizando R$ ${contrato.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
     'Pagamento via PIX em ate 24 horas apos confirmacao da entrega.',
-    'Ambas as partes concordam com os termos da plataforma Tanqe.',
+    'Ambas as partes concordam com os termos da plataforma TANQE.',
   ]
 
   return (
@@ -75,13 +75,13 @@ export default function ContratoDetalhePage({ params }: { params: Promise<{ id: 
           <div className="pr-6 border-r border-gray-100">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Comprador</p>
             <p className="text-lg font-semibold text-gray-900 mt-2">{contrato.posto?.nome}</p>
-            <p className="text-sm text-gray-500 font-mono">{contrato.posto?.cnpj || '—'}</p>
+            <p className="text-sm text-gray-500 font-mono">{contrato.posto?.cnpj || 'â€”'}</p>
             <p className="text-sm text-gray-400">{contrato.posto?.cidade}/{contrato.posto?.estado}</p>
           </div>
           <div>
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Vendedor</p>
             <p className="text-lg font-semibold text-gray-900 mt-2">{contrato.lance?.distribuidora?.nome}</p>
-            <p className="text-sm text-gray-500 font-mono">{contrato.lance?.distribuidora?.cnpj || '—'}</p>
+            <p className="text-sm text-gray-500 font-mono">{contrato.lance?.distribuidora?.cnpj || 'â€”'}</p>
             <p className="text-sm text-gray-400">{contrato.lance?.distribuidora?.cidade}/{contrato.lance?.distribuidora?.estado}</p>
           </div>
         </div>

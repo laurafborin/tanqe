@@ -1,9 +1,9 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Pagamento } from '@/lib/types'
-import StatusBadge from '@/components/StatusBadge'
+import StatusBadge from '@/components/ui/StatusBadge'
 
 export default function PagamentosDistPage() {
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
@@ -42,7 +42,7 @@ export default function PagamentosDistPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-2xl font-bold text-gray-900">R$ {p.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                  <p className="text-sm text-gray-400 mt-0.5">{p.contrato?.leilao?.combustivel} — {p.contrato?.leilao?.volume?.toLocaleString()} L</p>
+                  <p className="text-sm text-gray-400 mt-0.5">{p.contrato?.leilao?.combustivel} â€” {p.contrato?.leilao?.volume?.toLocaleString()} L</p>
                 </div>
                 <StatusBadge status={p.status} />
               </div>

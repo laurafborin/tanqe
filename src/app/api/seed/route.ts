@@ -8,7 +8,7 @@ export async function POST() {
   try {
     // 1. Auth as posto
     const postoClient = createClient(url, key)
-    const { data: pa, error: paErr } = await postoClient.auth.signInWithPassword({ email: 'posto@fuelbid.com', password: '123456' })
+    const { data: pa, error: paErr } = await postoClient.auth.signInWithPassword({ email: 'posto@tanqe.com.br', password: '123456' })
     if (paErr) throw new Error(`Auth posto: ${paErr.message}`)
     const postoId = pa.user.id
     const { data: postoPf } = await postoClient.from('profiles').select('nome').eq('id', postoId).single()
@@ -16,7 +16,7 @@ export async function POST() {
 
     // 2. Auth as distribuidora
     const distClient = createClient(url, key)
-    const { data: da, error: daErr } = await distClient.auth.signInWithPassword({ email: 'distribuidora@fuelbid.com', password: '123456' })
+    const { data: da, error: daErr } = await distClient.auth.signInWithPassword({ email: 'distribuidora@tanqe.com.br', password: '123456' })
     if (daErr) throw new Error(`Auth dist: ${daErr.message}`)
     const distId = da.user.id
     const { data: distPf } = await distClient.from('profiles').select('nome').eq('id', distId).single()
@@ -72,7 +72,7 @@ export async function POST() {
         'O volume total de 15.000 litros será entregue em remessa única no prazo de 3 dias úteis.',
         'O preço acordado de R$ 5,58/L é fixo e inclui frete até o posto comprador.',
         'O pagamento será realizado via PIX em até 24 horas após confirmação da entrega.',
-        'Ambas as partes concordam com os termos da plataforma Tanqe e legislação vigente.',
+        'Ambas as partes concordam com os termos da plataforma TANQE e legislação vigente.',
       ],
       hash_contrato: hash,
       assinatura_posto: 'data:image/png;base64,signed-posto',

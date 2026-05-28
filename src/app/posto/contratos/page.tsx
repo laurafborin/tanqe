@@ -1,9 +1,9 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Contrato } from '@/lib/types'
-import StatusBadge from '@/components/StatusBadge'
+import StatusBadge from '@/components/ui/StatusBadge'
 import Link from 'next/link'
 
 export default function ContratosPostoPage() {
@@ -40,7 +40,7 @@ export default function ContratosPostoPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">Combustível</th>
+                <th className="text-left px-4 py-3 font-medium">CombustÃ­vel</th>
                 <th className="text-left px-4 py-3 font-medium">Distribuidora</th>
                 <th className="text-left px-4 py-3 font-medium">Volume</th>
                 <th className="text-left px-4 py-3 font-medium">Valor Total</th>

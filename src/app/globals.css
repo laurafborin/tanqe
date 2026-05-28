@@ -1,17 +1,22 @@
 @import "tailwindcss";
 
+/* Tailwind theme aliases — mantém classes legadas (bg-brand, etc.) apontando pros tokens TANQE */
 @theme inline {
-  --color-brand: #E8621A;
-  --color-brand-dark: #C44E10;
-  --color-bg: #F8F7F4;
-  --color-foreground: #1a1a1a;
-  --font-sans: var(--font-dm-sans);
+  --color-brand: var(--tanqe-orange);
+  --color-brand-dark: var(--tanqe-orange-deep);
+  --color-bg: var(--tanqe-cream);
+  --color-foreground: var(--tanqe-black);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-body);
+  background: var(--tanqe-cream);
+  color: var(--tanqe-black);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 @keyframes slideIn {

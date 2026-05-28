@@ -1,10 +1,10 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Leilao } from '@/lib/types'
-import Countdown from '@/components/Countdown'
-import StatusBadge from '@/components/StatusBadge'
+import Countdown from '@/components/ui/Countdown'
+import StatusBadge from '@/components/ui/StatusBadge'
 import Link from 'next/link'
 
 export default function LeiloesDistribuidoraPage() {
