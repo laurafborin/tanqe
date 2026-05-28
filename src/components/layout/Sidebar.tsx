@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard,
   Gavel,
@@ -22,7 +22,6 @@ import {
 import { Logo } from '@/components/ui/Logo'
 import { Avatar } from '@/components/ui/Avatar'
 import { logout, getNome } from '@/lib/auth'
-import { useEffect } from 'react'
 
 type Role = 'posto' | 'distribuidora'
 
@@ -34,7 +33,7 @@ interface NavItem {
 
 const postoItems: NavItem[] = [
   { label: 'Dashboard', href: '/posto/dashboard', icon: LayoutDashboard },
-  { label: 'LeilÃµes', href: '/posto/leiloes', icon: Gavel },
+  { label: 'Leilões', href: '/posto/leiloes', icon: Gavel },
   { label: 'Pedidos', href: '/posto/pedidos', icon: Truck },
   { label: 'Contratos', href: '/posto/contratos', icon: FileText },
   { label: 'NF-es', href: '/posto/nfes', icon: Receipt },
@@ -130,19 +129,19 @@ export default function Sidebar({ tipo }: { tipo: Role }) {
         zIndex: 40,
       }}
     >
-      {/* TOPO */}
+      {/* TOPO — só wordmark TANQE (variant dark) + portal label. Zero ícones aqui. */}
       <div
         style={{
-          padding: 24,
+          padding: '24px 24px 20px',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        <Link href="/" aria-label="TANQE" style={{ display: 'block' }}>
-          <Logo variant="dark" size="sm" />
+        <Link href="/" aria-label="TANQE" style={{ display: 'inline-block', textDecoration: 'none' }}>
+          <Logo variant="dark" size="md" />
         </Link>
         <p
           style={{
-            margin: '12px 0 0',
+            margin: '14px 0 0',
             fontFamily: 'var(--font-mono)',
             fontSize: 9,
             textTransform: 'uppercase',
@@ -167,7 +166,6 @@ export default function Sidebar({ tipo }: { tipo: Role }) {
           padding: '12px',
         }}
       >
-        {/* User card */}
         {nome && (
           <div
             style={{
@@ -246,10 +244,12 @@ export default function Sidebar({ tipo }: { tipo: Role }) {
 
   return (
     <>
-      {/* Mobile toggle */}
+      {/* Mobile hamburger — APENAS em < 1024px, FORA da sidebar (header flutuante).
+          No desktop é display: none via media query. */}
       <button
         onClick={() => setMobileOpen(true)}
         aria-label="Abrir menu"
+        className="tanqe-mobile-toggle"
         style={{
           position: 'fixed',
           top: 16,
@@ -260,22 +260,23 @@ export default function Sidebar({ tipo }: { tipo: Role }) {
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 3,
           color: 'var(--tanqe-white)',
-          display: 'flex',
+          display: 'none',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
           zIndex: 50,
         }}
-        className="lg:hidden"
       >
         <Menu size={18} />
       </button>
 
-      <div className="hidden lg:block">{aside}</div>
+      {/* Sidebar desktop fixa */}
+      <div className="tanqe-sidebar-desktop">{aside}</div>
 
+      {/* Drawer mobile */}
       {mobileOpen && (
         <div
-          className="lg:hidden"
+          className="tanqe-sidebar-drawer"
           style={{
             position: 'fixed',
             inset: 0,
@@ -294,6 +295,7 @@ export default function Sidebar({ tipo }: { tipo: Role }) {
           <div style={{ position: 'relative' }}>{aside}</div>
           <button
             onClick={() => setMobileOpen(false)}
+            aria-label="Fechar menu"
             style={{
               position: 'absolute',
               top: 16,
@@ -308,13 +310,21 @@ export default function Sidebar({ tipo }: { tipo: Role }) {
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            aria-label="Fechar menu"
           >
             <X size={18} />
           </button>
         </div>
       )}
+
+      {/* CSS responsivo independente do Tailwind */}
+      <style>{`
+        .tanqe-sidebar-desktop { display: block; }
+        .tanqe-mobile-toggle { display: none !important; }
+        @media (max-width: 1023px) {
+          .tanqe-sidebar-desktop { display: none !important; }
+          .tanqe-mobile-toggle { display: flex !important; }
+        }
+      `}</style>
     </>
   )
 }
-
