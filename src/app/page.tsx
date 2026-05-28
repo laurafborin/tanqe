@@ -58,7 +58,7 @@ export default function LandingPage() {
         }}
       >
         <Link href="/" aria-label="TANQE" style={{ display: 'flex', alignItems: 'center' }}>
-          <Logo variant="light-orange" size="sm" />
+          <Logo variant="dark" size="sm" />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
           <a href="#postos" style={navLink} className="nav-anchor">
@@ -123,17 +123,17 @@ export default function LandingPage() {
 
           <h1
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(72px, 12vw, 140px)',
+              fontFamily: 'var(--font-sora), Sora, sans-serif',
+              fontSize: 'clamp(72px, 11vw, 128px)',
               fontWeight: 800,
-              letterSpacing: '-0.02em',
+              letterSpacing: '-0.03em',
               lineHeight: 0.95,
               margin: 0,
               marginBottom: 24,
+              whiteSpace: 'nowrap',
             }}
           >
-            <span style={{ color: 'var(--tanqe-white)' }}>TAN</span>
-            <br />
+            <span style={{ color: 'var(--tanqe-cream)' }}>TAN</span>
             <span style={{ color: 'var(--tanqe-orange)' }}>QE</span>
           </h1>
 
@@ -454,7 +454,7 @@ export default function LandingPage() {
             alignItems: 'center',
           }}
         >
-          <Logo variant="light-orange" size="md" />
+          <Logo variant="dark" size="md" />
           <div
             style={{
               fontFamily: 'var(--font-mono)',

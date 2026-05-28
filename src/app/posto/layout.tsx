@@ -38,7 +38,7 @@ export default function PostoLayout({
         }}
       >
         <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }`}</style>
-        <Logo variant="light-orange" size="md" />
+        <Logo variant="dark" size="md" />
       </div>
     )
   }

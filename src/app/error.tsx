@@ -18,7 +18,7 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
       }}
     >
       <div style={{ marginBottom: 48 }}>
-        <Logo variant="light" size="md" />
+        <Logo variant="dark" size="md" />
       </div>
 
       <p

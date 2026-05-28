@@ -34,7 +34,7 @@ interface NavItem {
 
 const postoItems: NavItem[] = [
   { label: 'Dashboard', href: '/posto/dashboard', icon: LayoutDashboard },
-  { label: 'Leilões', href: '/posto/leiloes', icon: Gavel },
+  { label: 'LeilÃµes', href: '/posto/leiloes', icon: Gavel },
   { label: 'Pedidos', href: '/posto/pedidos', icon: Truck },
   { label: 'Contratos', href: '/posto/contratos', icon: FileText },
   { label: 'NF-es', href: '/posto/nfes', icon: Receipt },
@@ -138,7 +138,7 @@ export default function Sidebar({ tipo }: { tipo: Role }) {
         }}
       >
         <Link href="/" aria-label="TANQE" style={{ display: 'block' }}>
-          <Logo variant="light-orange" size="sm" />
+          <Logo variant="dark" size="sm" />
         </Link>
         <p
           style={{

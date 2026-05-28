@@ -53,7 +53,8 @@
   --status-info-fg: #1976D2;
 
   /* Tipografia (usa fallbacks até next/font carregar) */
-  --font-display: var(--font-display-loaded), 'Syne', sans-serif;
+  --font-display: var(--font-sora), 'Sora', sans-serif;
+  --font-sora: var(--font-sora), 'Sora', sans-serif;
   --font-body: var(--font-body-loaded), 'DM Sans', sans-serif;
   --font-mono: var(--font-mono-loaded), 'DM Mono', monospace;
 

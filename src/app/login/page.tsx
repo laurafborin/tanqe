@@ -93,7 +93,7 @@ export default function LoginPage() {
           }}
         />
         <div style={{ position: 'relative', maxWidth: 420 }}>
-          <Logo variant="light-orange" size="lg" />
+          <Logo variant="dark" size="lg" />
           <h2
             style={{
               fontFamily: 'var(--font-display)',

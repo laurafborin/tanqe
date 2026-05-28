@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
-import { Syne, DM_Sans, DM_Mono } from 'next/font/google'
+import { Sora, DM_Sans, DM_Mono } from 'next/font/google'
 import '../styles/tokens.css'
 import './globals.css'
 import { ToastProvider } from '@/components/ui/Toast'
 
-const syne = Syne({
+const sora = Sora({
   subsets: ['latin'],
-  weight: ['400', '600', '700', '800'],
-  variable: '--font-display-loaded',
+  weight: ['600', '700', '800'],
+  variable: '--font-sora',
   display: 'swap',
 })
 
@@ -36,7 +36,8 @@ export const metadata: Metadata = {
     type: 'website',
   },
   icons: {
-    icon: '/favicon.svg',
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 }
 
@@ -48,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${syne.variable} ${dmSans.variable} ${dmMono.variable} h-full antialiased`}
+      className={`${sora.variable} ${dmSans.variable} ${dmMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ToastProvider>{children}</ToastProvider>
