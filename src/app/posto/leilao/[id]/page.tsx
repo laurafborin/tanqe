@@ -16,6 +16,8 @@ import {
   getLeilao,
   getDist,
   getContratoByLeilao,
+  distLabelInLeilao,
+  modalidadeBadge,
   type Lance,
   type LeilaoStatus,
 } from '@/lib/mock-data'
@@ -83,7 +85,12 @@ export default function LeilaoDetailPage({ params }: { params: Promise<{ id: str
             observacoes: 'Lance ao vivo',
           }
           setNewLanceId(novoLance.id)
-          setShowToast(`Novo lance: ${dist?.nome ?? '—'} · ${formatPrecoLitro(novoPreco)}`)
+          // Toast também anônimo enquanto o leilão está aberto
+          const order: string[] = []
+          for (const lc of prev) if (!order.includes(lc.distId)) order.push(lc.distId)
+          if (!order.includes(distId)) order.push(distId)
+          const anonLabel = `Concorrente ${String.fromCharCode(65 + order.indexOf(distId))}`
+          setShowToast(`Novo lance: ${anonLabel} · ${formatPrecoLitro(novoPreco)}`)
           if (toastTimer.current) clearTimeout(toastTimer.current)
           toastTimer.current = setTimeout(() => setShowToast(null), 3000)
           return [...prev, novoLance]
@@ -173,8 +180,9 @@ export default function LeilaoDetailPage({ params }: { params: Promise<{ id: str
           {/* Lances */}
           <Card title="Lances recebidos" eyebrow={`${lances.length} ofertas · melhor: ${melhor ? formatPrecoLitro(melhor.precoLitro) : '—'}`}>
             <div style={{ display: 'grid', gap: 10 }}>
-              {lancesOrdenados.map((l, i) => {
-                const d = getDist(l.distId)
+              {lancesOrdenados.map((l) => {
+                const dummyLeilao = { ...leilaoOriginal, status, lances }
+                const { label, revelado } = distLabelInLeilao(dummyLeilao, l.distId)
                 const isBest = melhor && l.id === melhor.id
                 const isNew = l.id === newLanceId
                 const prevPrice = sortedByPrice.find((x) => x.id === l.id) ? sortedByPrice[Math.max(0, sortedByPrice.findIndex((x) => x.id === l.id) - 1)] : undefined
@@ -194,9 +202,16 @@ export default function LeilaoDetailPage({ params }: { params: Promise<{ id: str
                       animation: isNew ? 'tanqe-newrow 0.7s var(--ease-out)' : undefined,
                     }}
                   >
-                    <Avatar name={d?.nome || '?'} size={36} />
+                    <Avatar name={label} size={36} />
                     <div>
-                      <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, margin: 0 }}>{d?.nome}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, margin: 0 }}>{label}</p>
+                        {!revelado && (
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', background: 'var(--tanqe-stone)', padding: '2px 6px', borderRadius: 2 }}>
+                            anônimo
+                          </span>
+                        )}
+                      </div>
                       <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)', margin: 0, marginTop: 2 }}>
                         {timeAgo(l.timestamp)} · prazo {l.prazoEntrega}d{l.observacoes ? ` · ${l.observacoes}` : ''}
                       </p>
@@ -229,9 +244,16 @@ export default function LeilaoDetailPage({ params }: { params: Promise<{ id: str
               <span style={{ fontFamily: 'var(--font-mono)' }}>{formatLitros(leilaoOriginal.volume)}</span>
               <span style={{ color: 'var(--tanqe-gray)' }}>Pagamento</span>
               <span>{leilaoOriginal.formaPagamento}</span>
+              <span style={{ color: 'var(--tanqe-gray)' }}>Modalidade</span>
+              <span><Badge variant="destaque">{modalidadeBadge(leilaoOriginal.modalidade)}</Badge></span>
               <span style={{ color: 'var(--tanqe-gray)' }}>Região</span>
               <span>{leilaoOriginal.regiao}</span>
             </div>
+            {status === 'aberto' && (
+              <div style={{ marginTop: 14, padding: 10, background: 'var(--tanqe-cream)', borderRadius: 3, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', lineHeight: 1.5 }}>
+                🔒 Lances anônimos enquanto o leilão estiver aberto. As distribuidoras são reveladas após o encerramento.
+              </div>
+            )}
           </Card>
           <Card eyebrow="Economia projetada" title="Versus seu teto">
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 36, color: 'var(--tanqe-orange)', letterSpacing: '-0.02em', lineHeight: 1 }}>

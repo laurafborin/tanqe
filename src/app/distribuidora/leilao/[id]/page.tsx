@@ -12,8 +12,9 @@ import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
 import {
   getLeilao,
-  getDist,
   getPosto,
+  distLabelInLeilao,
+  modalidadeBadge,
   DIST_LOGADA_ID,
   type Lance,
   type LeilaoStatus,
@@ -103,8 +104,14 @@ export default function DistLeilaoDetailPage({ params }: { params: Promise<{ id:
           </Card>
 
           <Card title="Lances recebidos" eyebrow={`${lances.length} ofertas`}>
+            {leilao.status === 'aberto' && (
+              <div style={{ marginBottom: 12, padding: 10, background: 'var(--tanqe-cream)', borderRadius: 3, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', lineHeight: 1.5 }}>
+                🔒 Os concorrentes ficam anônimos enquanto o leilão estiver aberto. Você só vê os preços deles.
+              </div>
+            )}
             {sorted.map((l) => {
-              const d = getDist(l.distId)
+              const dummyLeilao = { ...leilao, lances }
+              const { label, revelado } = distLabelInLeilao(dummyLeilao, l.distId, DIST_LOGADA_ID)
               const isMine = l.distId === DIST_LOGADA_ID
               const isBest = melhor && l.id === melhor.id
               return (
@@ -122,10 +129,15 @@ export default function DistLeilaoDetailPage({ params }: { params: Promise<{ id:
                     alignItems: 'center',
                   }}
                 >
-                  <Avatar name={d?.nome || '?'} size={32} />
+                  <Avatar name={label} size={32} />
                   <div>
-                    <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, margin: 0 }}>
-                      {d?.nome}{isMine && <span style={{ marginLeft: 8, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--tanqe-orange-deep)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>· Você</span>}
+                    <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {label}
+                      {!revelado && !isMine && (
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--tanqe-gray)', background: 'var(--tanqe-stone)', padding: '2px 6px', borderRadius: 2 }}>
+                          anônimo
+                        </span>
+                      )}
                     </p>
                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)', margin: 0, marginTop: 2 }}>{timeAgo(l.timestamp)}</p>
                   </div>
@@ -143,6 +155,8 @@ export default function DistLeilaoDetailPage({ params }: { params: Promise<{ id:
               <span style={{ fontFamily: 'var(--font-mono)' }}>{formatPrecoLitro(leilao.precoTeto)}</span>
               <span style={{ color: 'var(--tanqe-gray)' }}>Melhor atual</span>
               <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--tanqe-orange)' }}>{melhor ? formatPrecoLitro(melhor.precoLitro) : '—'}</span>
+              <span style={{ color: 'var(--tanqe-gray)' }}>Modalidade</span>
+              <span><Badge variant="destaque">{modalidadeBadge(leilao.modalidade)}</Badge></span>
             </div>
           </Card>
 

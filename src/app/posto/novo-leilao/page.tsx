@@ -8,7 +8,7 @@ import { Fuel, Calendar, DollarSign, Check, Sparkles } from 'lucide-react'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { ANP_30D, type Combustivel } from '@/lib/mock-data'
+import { ANP_30D, type Combustivel, type Modalidade } from '@/lib/mock-data'
 import { formatBRL, formatLitros, formatPrecoLitro } from '@/lib/format'
 
 const COMBUSTIVEIS: Array<{ value: Combustivel; cor: string; ref: number }> = [
@@ -25,6 +25,7 @@ export default function NovoLeilaoPage() {
   const [combustivel, setCombustivel] = useState<Combustivel>('Diesel S-10')
   const [volume, setVolume] = useState(25000)
   const [dataEntrega, setDataEntrega] = useState('')
+  const [modalidade, setModalidade] = useState<Modalidade>('entrega')
   const [pagamento, setPagamento] = useState<'PIX' | '30 dias' | '45 dias'>('PIX')
   const [precoTeto, setPrecoTeto] = useState(5.92)
 
@@ -35,7 +36,7 @@ export default function NovoLeilaoPage() {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(
         'tanqe:novo-leilao-recente',
-        JSON.stringify({ combustivel, volume, precoTeto, pagamento, criadoEm: new Date().toISOString() }),
+        JSON.stringify({ combustivel, volume, precoTeto, pagamento, modalidade, criadoEm: new Date().toISOString() }),
       )
     }
     router.push('/posto/leiloes')
@@ -137,11 +138,44 @@ export default function NovoLeilaoPage() {
       )}
 
       {step === 2 && (
-        <Card title="Quando você precisa?" eyebrow="Entrega e pagamento">
+        <Card title="Quando e como?" eyebrow="Entrega, modalidade e pagamento">
+          {/* Modalidade: entrega CIF vs retirada FOB */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', display: 'block', marginBottom: 12 }}>
+              Modalidade de transporte
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+              {([
+                { id: 'entrega', titulo: 'Entrega (CIF)', sub: 'Distribuidora entrega no seu posto. Frete já incluso no preço.' },
+                { id: 'retirada', titulo: 'Retirada (FOB)', sub: 'Você retira na base da distribuidora. Costuma ser preço mais baixo.' },
+              ] as const).map((opt) => {
+                const active = modalidade === opt.id
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => setModalidade(opt.id as Modalidade)}
+                    style={{
+                      textAlign: 'left',
+                      padding: 16,
+                      borderRadius: 3,
+                      background: 'var(--tanqe-white)',
+                      border: active ? '2px solid var(--tanqe-orange)' : '1px solid var(--tanqe-stone)',
+                      cursor: 'pointer',
+                      transition: 'border-color var(--dur-fast) var(--ease-out)',
+                    }}
+                  >
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--tanqe-black)', marginBottom: 4 }}>{opt.titulo}</div>
+                    <div style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: 12, color: 'var(--tanqe-gray)', lineHeight: 1.5 }}>{opt.sub}</div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24, marginBottom: 24 }}>
             <div>
               <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--tanqe-gray)', display: 'block', marginBottom: 8 }}>
-                Data de entrega
+                {modalidade === 'entrega' ? 'Data desejada de entrega' : 'Data prevista de retirada'}
               </label>
               <input
                 type="date"
@@ -179,10 +213,12 @@ export default function NovoLeilaoPage() {
               </div>
             </div>
           </div>
+
           <div style={{ background: 'var(--tanqe-cream)', padding: 16, borderRadius: 4, marginBottom: 24 }}>
             <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--tanqe-gray)', margin: 0, lineHeight: 1.6 }}>
               Você está pedindo <strong style={{ color: 'var(--tanqe-black)' }}>{formatLitros(volume)} de {combustivel}</strong>
-              {dataEntrega ? <> com entrega para <strong style={{ color: 'var(--tanqe-black)' }}>{new Date(dataEntrega).toLocaleDateString('pt-BR')}</strong></> : ''}
+              {' · '}<strong style={{ color: 'var(--tanqe-black)' }}>{modalidade === 'entrega' ? 'entrega no posto' : 'retirada na base'}</strong>
+              {dataEntrega ? <>, em <strong style={{ color: 'var(--tanqe-black)' }}>{new Date(dataEntrega).toLocaleDateString('pt-BR')}</strong></> : ''}
               , pagamento <strong style={{ color: 'var(--tanqe-black)' }}>{pagamento}</strong>.
             </p>
           </div>

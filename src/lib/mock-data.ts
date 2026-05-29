@@ -85,6 +85,8 @@ export interface Lance {
   observacoes?: string
 }
 
+export type Modalidade = 'entrega' | 'retirada'
+
 export interface Leilao {
   id: string
   codigo: string
@@ -99,6 +101,7 @@ export interface Leilao {
   regiao: string
   formaPagamento: 'PIX' | 'Boleto' | 'Transferência'
   prazoMaximoDias: number
+  modalidade: Modalidade
   createdAt: string
   endsAt: string
   lances: Lance[]
@@ -562,6 +565,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'PIX',
     prazoMaximoDias: 5,
+    modalidade: 'entrega',
     createdAt: iso(-HOURS(10)),
     endsAt: iso(HOURS(14) + 32 * 60_000),
     lances: buildLances('lei_001', [
@@ -582,6 +586,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'Boleto',
     prazoMaximoDias: 7,
+    modalidade: 'entrega',
     createdAt: iso(-HOURS(18)),
     endsAt: iso(HOURS(6) + 18 * 60_000),
     lances: buildLances('lei_002', [
@@ -604,6 +609,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Interior SP',
     formaPagamento: 'PIX',
     prazoMaximoDias: 3,
+    modalidade: 'retirada',
     createdAt: iso(-HOURS(22)),
     endsAt: iso(HOURS(22) + 11 * 60_000),
     lances: buildLances('lei_003', [
@@ -623,6 +629,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'PIX',
     prazoMaximoDias: 4,
+    modalidade: 'entrega',
     createdAt: iso(-HOURS(5)),
     endsAt: iso(HOURS(31)),
     lances: buildLances('lei_004', [
@@ -642,6 +649,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Sorocaba e região',
     formaPagamento: 'Boleto',
     prazoMaximoDias: 6,
+    modalidade: 'entrega',
     createdAt: iso(-HOURS(3)),
     endsAt: iso(HOURS(45)),
     lances: buildLances('lei_005', [
@@ -661,6 +669,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Rio de Janeiro',
     formaPagamento: 'Transferência',
     prazoMaximoDias: 8,
+    modalidade: 'entrega',
     createdAt: iso(-HOURS(2)),
     endsAt: iso(HOURS(70)),
     lances: buildLances('lei_006', [
@@ -684,6 +693,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'PIX',
     prazoMaximoDias: 5,
+    modalidade: 'entrega',
     createdAt: iso(-DAYS(2)),
     endsAt: iso(-HOURS(8)),
     lances: buildLances('lei_010', [
@@ -705,6 +715,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Interior SP',
     formaPagamento: 'Boleto',
     prazoMaximoDias: 6,
+    modalidade: 'entrega',
     createdAt: iso(-DAYS(3)),
     endsAt: iso(-DAYS(1)),
     lances: buildLances('lei_011', [
@@ -728,6 +739,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'PIX',
     prazoMaximoDias: 3,
+    modalidade: 'entrega',
     createdAt: iso(-DAYS(4)),
     endsAt: iso(-DAYS(3)),
     lances: buildLances('lei_020', [
@@ -749,6 +761,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'PIX',
     prazoMaximoDias: 5,
+    modalidade: 'entrega',
     createdAt: iso(-DAYS(5)),
     endsAt: iso(-DAYS(4)),
     lances: buildLances('lei_021', [
@@ -770,6 +783,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Interior SP',
     formaPagamento: 'PIX',
     prazoMaximoDias: 3,
+    modalidade: 'retirada',
     createdAt: iso(-DAYS(6)),
     endsAt: iso(-DAYS(5)),
     lances: buildLances('lei_022', [
@@ -792,6 +806,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'PIX',
     prazoMaximoDias: 4,
+    modalidade: 'entrega',
     createdAt: iso(-DAYS(15)),
     endsAt: iso(-DAYS(14)),
     lances: [],
@@ -810,6 +825,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'PIX',
     prazoMaximoDias: 5,
+    modalidade: 'entrega',
     createdAt: iso(-DAYS(20)),
     endsAt: iso(-DAYS(19)),
     lances: [],
@@ -828,6 +844,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'Boleto',
     prazoMaximoDias: 3,
+    modalidade: 'retirada',
     createdAt: iso(-DAYS(25)),
     endsAt: iso(-DAYS(24)),
     lances: [],
@@ -846,6 +863,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'ABC Paulista',
     formaPagamento: 'PIX',
     prazoMaximoDias: 6,
+    modalidade: 'entrega',
     createdAt: iso(-DAYS(30)),
     endsAt: iso(-DAYS(29)),
     lances: [],
@@ -864,6 +882,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'PIX',
     prazoMaximoDias: 4,
+    modalidade: 'entrega',
     createdAt: iso(-DAYS(35)),
     endsAt: iso(-DAYS(34)),
     lances: [],
@@ -882,6 +901,7 @@ export const LEILOES: Leilao[] = [
     regiao: 'Grande São Paulo',
     formaPagamento: 'Boleto',
     prazoMaximoDias: 5,
+    modalidade: 'entrega',
     createdAt: iso(-DAYS(40)),
     endsAt: iso(-DAYS(39)),
     lances: [],
@@ -1248,6 +1268,40 @@ export const lancesByDist = (distId: string): Array<{ lance: Lance; leilao: Leil
 }
 export const avaliacoesRecebidasPorDist = (distId: string) => AVALIACOES.filter(a => a.avaliadoId === distId)
 export const avaliacoesRecebidasPorPosto = (postoId: string) => AVALIACOES.filter(a => a.avaliadoId === postoId)
+
+/**
+ * Label da distribuidora em um leilão respeitando anonimato.
+ * Enquanto o leilão está aberto, identidades ficam ocultas (estilo licitação).
+ * Depois que o leilão encerra, identidades são reveladas.
+ *
+ * @param viewerDistId — se fornecido, a própria distribuidora vê "Você" no lance dela.
+ */
+export function distLabelInLeilao(
+  leilao: Leilao,
+  distId: string,
+  viewerDistId?: string,
+): { label: string; revelado: boolean } {
+  if (leilao.status !== 'aberto') {
+    return { label: getDist(distId)?.nome ?? 'Distribuidora', revelado: true }
+  }
+  if (viewerDistId && viewerDistId === distId) {
+    return { label: 'Você', revelado: true }
+  }
+  const order: string[] = []
+  for (const l of leilao.lances) {
+    if (!order.includes(l.distId)) order.push(l.distId)
+  }
+  const idx = order.indexOf(distId)
+  return { label: `Concorrente ${String.fromCharCode(65 + idx)}`, revelado: false }
+}
+
+export function modalidadeLabel(m: Modalidade): string {
+  return m === 'entrega' ? 'Entrega CIF (distribuidora entrega)' : 'Retirada FOB (posto retira)'
+}
+
+export function modalidadeBadge(m: Modalidade): string {
+  return m === 'entrega' ? 'Entrega' : 'Retirada'
+}
 
 export function melhorLance(l: Leilao): Lance | undefined {
   if (l.lances.length === 0) return undefined
