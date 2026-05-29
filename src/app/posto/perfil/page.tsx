@@ -107,8 +107,8 @@ export default function PerfilPostoPage() {
                 {posto.bandeira} · CNPJ {posto.cnpj}
               </span>
             </div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 32, letterSpacing: '-0.02em', margin: 0 }}>{displayName}</h2>
-            <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: 14, color: 'var(--tanqe-gray-light)', margin: '6px 0 0' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(22px, 3vw, 32px)', letterSpacing: '-0.02em', margin: 0, wordBreak: 'break-word', lineHeight: 1.1 }}>{displayName}</h2>
+            <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: 14, color: 'var(--tanqe-gray-light)', margin: '6px 0 0', wordBreak: 'break-word', lineHeight: 1.5 }}>
               {posto.razaoSocial}
             </p>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.18em', color: 'var(--tanqe-gray)', margin: '10px 0 0' }}>
@@ -182,7 +182,7 @@ export default function PerfilPostoPage() {
       {/* Dados cadastrais */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
         <Card title="Razão social e documentos" eyebrow="Dados jurídicos">
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', rowGap: 12, columnGap: 16, fontFamily: 'var(--font-body)', fontSize: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', rowGap: 12, columnGap: 16, fontFamily: 'var(--font-body)', fontSize: 14, alignItems: 'baseline' }}>
             <KV label="Razão social" value={posto.razaoSocial} />
             <KV label="Nome fantasia" value={posto.nome} />
             <KV label="CNPJ" value={posto.cnpj} mono />
@@ -193,7 +193,7 @@ export default function PerfilPostoPage() {
         </Card>
 
         <Card title="Endereço e contato" eyebrow="Onde a gente te encontra">
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', rowGap: 12, columnGap: 16, fontFamily: 'var(--font-body)', fontSize: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', rowGap: 12, columnGap: 16, fontFamily: 'var(--font-body)', fontSize: 14, alignItems: 'baseline' }}>
             <KV icon={<MapPin size={14} color="var(--tanqe-gray)" />} label="Endereço" value={posto.endereco} />
             <KV icon={<Building2 size={14} color="var(--tanqe-gray)" />} label="Cidade/UF" value={`${posto.cidade}/${posto.uf}`} />
             <KV label="CEP" value={posto.cep} mono />
@@ -204,7 +204,7 @@ export default function PerfilPostoPage() {
         </Card>
 
         <Card title="Operação" eyebrow="Capacidade e atuação">
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', rowGap: 12, columnGap: 16, fontFamily: 'var(--font-body)', fontSize: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', rowGap: 12, columnGap: 16, fontFamily: 'var(--font-body)', fontSize: 14, alignItems: 'baseline' }}>
             <KV label="Volume mensal" value={formatLitros(posto.volumeMensal)} />
             <KV label="Capacidade tanque" value={formatLitros(posto.capacidadeTanque)} />
             <KV label="Combustíveis" value={posto.combustiveis.join(', ')} />
@@ -225,7 +225,7 @@ export default function PerfilPostoPage() {
           ].map((b) => {
             const pct = (b.valor / 5) * 100
             return (
-              <div key={b.nome} style={{ display: 'grid', gridTemplateColumns: '160px 1fr 64px', gap: 16, alignItems: 'center' }}>
+              <div key={b.nome} style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) minmax(120px, 2fr) auto', gap: 16, alignItems: 'center' }}>
                 <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500 }}>{b.nome}</span>
                 <div style={{ height: 8, background: 'var(--tanqe-stone)', borderRadius: 4, overflow: 'hidden' }}>
                   <div style={{ width: `${pct}%`, height: '100%', background: 'var(--gradient-orange)' }} />
@@ -302,11 +302,11 @@ export default function PerfilPostoPage() {
 function KV({ icon, label, value, mono }: { icon?: React.ReactNode; label: string; value: string; mono?: boolean }) {
   return (
     <>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--tanqe-gray)', fontSize: 13, fontFamily: 'var(--font-body)' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--tanqe-gray)', fontSize: 13, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', alignSelf: 'start', paddingTop: 1 }}>
         {icon}
         {label}
       </span>
-      <span style={{ fontFamily: mono ? 'var(--font-mono)' : 'var(--font-body)', fontWeight: 500, color: 'var(--tanqe-black)' }}>{value}</span>
+      <span style={{ fontFamily: mono ? 'var(--font-mono)' : 'var(--font-body)', fontWeight: 500, color: 'var(--tanqe-black)', minWidth: 0, wordBreak: 'break-word', overflowWrap: 'anywhere', lineHeight: 1.5 }}>{value}</span>
     </>
   )
 }

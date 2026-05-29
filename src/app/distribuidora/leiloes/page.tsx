@@ -12,6 +12,7 @@ import {
   leiloesAbertos,
   getPosto,
   melhorLance,
+  modalidadeBadge,
   type Combustivel,
 } from '@/lib/mock-data'
 import { formatLitros, formatPrecoLitro, formatCountdown } from '@/lib/format'
@@ -47,8 +48,11 @@ export default function OportunidadesPage() {
           const posto = getPosto(l.postoId)
           return (
             <Card key={l.id} padding={20} hoverable>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <Badge variant="aberto">{l.combustivel}</Badge>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <Badge variant="aberto">{l.combustivel}</Badge>
+                  <Badge variant="neutro">{modalidadeBadge(l.modalidade)}</Badge>
+                </div>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--tanqe-gray)' }}>{l.codigo}</span>
               </div>
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--tanqe-black)', margin: 0 }}>{formatLitros(l.volume)}</h3>

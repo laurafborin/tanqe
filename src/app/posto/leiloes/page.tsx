@@ -13,6 +13,7 @@ import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import {
   LEILOES,
   POSTO_LOGADO_ID,
+  modalidadeBadge,
   type Leilao,
   type LeilaoStatus,
   melhorLance,
@@ -61,6 +62,7 @@ export default function LeiloesPostoPage() {
     { key: 'codigo', label: 'Código', render: (l) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--tanqe-gray)' }}>{l.codigo}</span> },
     { key: 'combustivel', label: 'Combustível', render: (l) => <span style={{ fontWeight: 500 }}>{l.combustivel}</span> },
     { key: 'volume', label: 'Volume', align: 'right', render: (l) => formatLitros(l.volume) },
+    { key: 'modalidade', label: 'Modalidade', render: (l) => <Badge variant="neutro">{modalidadeBadge(l.modalidade)}</Badge> },
     { key: 'precoTeto', label: 'Teto', align: 'right', render: (l) => <span style={{ fontFamily: 'var(--font-mono)' }}>{formatPrecoLitro(l.precoTeto)}</span> },
     {
       key: 'melhor',

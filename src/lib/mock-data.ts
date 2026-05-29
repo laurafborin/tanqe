@@ -1123,12 +1123,32 @@ export const AVALIACOES_DESTAQUE_POSTO: Avaliacao[] = [
   { id: 'av_des_6', avaliadorId: 'dst_008', avaliadoId: 'pst_001', contratoId: 'con_006', nota: 4, comentario: 'Boa experiência. Pequeno ajuste de janela de descarga no início, resolvido por telefone em 5 minutos. Operação fluida.', criterios: { pontualidade: 4, qualidade: 5, comunicacao: 5 }, criadoEm: '2025-11-28T13:20:00Z' },
 ]
 
+export const CONQUISTAS_DIST: Conquista[] = [
+  { id: 'cqd_1', titulo: 'Top 5 distribuidoras da Grande SP', detalhe: 'Maior volume contratado via plataforma no 1º semestre de 2026', emissor: 'TANQE Rankings', data: '2026-04-15', destaque: true },
+  { id: 'cqd_2', titulo: 'Selo Entrega no Prazo', detalhe: '98,7% das entregas concluídas dentro da janela acordada', emissor: 'TANQE Operacional', data: '2026-03-08' },
+  { id: 'cqd_3', titulo: 'Parceira preferencial em Diesel S-10', detalhe: 'Win rate de 72% em leilões do combustível na região', emissor: 'TANQE Insights', data: '2026-02-20' },
+  { id: 'cqd_4', titulo: 'Zero penalidades regulatórias', detalhe: '24 meses sem registro de infração ANP ou ambiental', emissor: 'TANQE Compliance', data: '2026-01-10' },
+  { id: 'cqd_5', titulo: 'Embaixadora do leilão reverso', detalhe: 'Parceira piloto desde o lançamento da plataforma em 2024', emissor: 'TANQE', data: '2024-09-01' },
+]
+
+export const AVALIACOES_DESTAQUE_DIST: Avaliacao[] = [
+  { id: 'avd_1', avaliadorId: 'pst_001', avaliadoId: 'dst_001', contratoId: 'con_001', nota: 5, comentario: 'Caminhão chegou 30min antes do horário marcado. Cubagem conferida na minha frente. NF-e emitida antes do motorista sair do pátio. Operação que nem rede grande consegue replicar.', criterios: { pontualidade: 5, qualidade: 5, comunicacao: 5 }, criadoEm: '2026-04-20T15:00:00Z' },
+  { id: 'avd_2', avaliadorId: 'pst_003', avaliadoId: 'dst_001', contratoId: 'con_002', nota: 5, comentario: 'Equipe comercial responde em minutos no WhatsApp. Já me avisaram 3 vezes sobre variações relevantes da ANP antes do meu próximo leilão. Parceria de verdade.', criterios: { pontualidade: 5, qualidade: 5, comunicacao: 5 }, criadoEm: '2026-03-30T10:15:00Z' },
+  { id: 'avd_3', avaliadorId: 'pst_002', avaliadoId: 'dst_001', contratoId: 'con_003', nota: 5, comentario: 'Diesel S-10 dentro da especificação ANP em todas as 8 entregas que fizemos. Documentação fiscal sem um erro. Posto independente precisa disso.', criterios: { pontualidade: 5, qualidade: 5, comunicacao: 4 }, criadoEm: '2026-02-18T12:30:00Z' },
+  { id: 'avd_4', avaliadorId: 'pst_004', avaliadoId: 'dst_001', contratoId: 'con_004', nota: 5, comentario: 'Aceita pequenas variações de volume sem complicação. Última entrega o tanque tava mais cheio do que eu esperava e eles ajustaram em 1h.', criterios: { pontualidade: 4, qualidade: 5, comunicacao: 5 }, criadoEm: '2026-01-25T16:45:00Z' },
+  { id: 'avd_5', avaliadorId: 'pst_006', avaliadoId: 'dst_001', contratoId: 'con_005', nota: 5, comentario: 'Preço quase sempre 2-3 centavos abaixo da média da praça. Sustentaram isso por 6 meses. Não tem como pedir mais.', criterios: { pontualidade: 5, qualidade: 5, comunicacao: 5 }, criadoEm: '2025-12-20T11:00:00Z' },
+  { id: 'avd_6', avaliadorId: 'pst_005', avaliadoId: 'dst_001', contratoId: 'con_006', nota: 4, comentario: 'Uma vez o motorista chegou em horário diferente, mas avisaram 2h antes. Tirando isso, operação muito profissional.', criterios: { pontualidade: 4, qualidade: 5, comunicacao: 5 }, criadoEm: '2025-11-30T14:20:00Z' },
+]
+
 export const CERTIFICACOES_DIST: Certificacao[] = [
   { id: 'crt_d1', nome: 'Autorização ANP — Distribuidor', emissor: 'Agência Nacional do Petróleo', numero: 'ANP-DIST-2023-2014', emissaoIso: '2023-06-01', vencimentoIso: '2028-06-01', status: 'ativa' },
   { id: 'crt_d2', nome: 'Cadastro SEFAZ-SP', emissor: 'SEFAZ-SP', numero: 'SEFAZ-SP-2024-008811', emissaoIso: '2024-01-22', vencimentoIso: '2027-01-22', status: 'ativa' },
   { id: 'crt_d3', nome: 'ISO 9001 — Qualidade', emissor: 'BSI Brasil', numero: 'ISO-9001-2024-114', emissaoIso: '2024-08-12', vencimentoIso: '2027-08-12', status: 'ativa' },
   { id: 'crt_d4', nome: 'Licença ambiental IBAMA', emissor: 'IBAMA', numero: 'IBAMA-2023-44889', emissaoIso: '2023-11-04', vencimentoIso: '2026-11-04', status: 'ativa' },
   { id: 'crt_d5', nome: 'Cadastro RNTRC', emissor: 'ANTT', numero: 'RNTRC-2025-77001', emissaoIso: '2025-01-15', vencimentoIso: '2026-01-15', status: 'vencida' },
+  { id: 'crt_d6', nome: 'PROCONVE — Frota', emissor: 'IBAMA', numero: 'PRCV-DIST-2024-2002', emissaoIso: '2024-04-20', vencimentoIso: '2027-04-20', status: 'ativa' },
+  { id: 'crt_d7', nome: 'OHSAS 18001 — SST', emissor: 'BSI Brasil', numero: 'OHSAS-2024-558', emissaoIso: '2024-09-30', vencimentoIso: '2027-09-30', status: 'ativa' },
+  { id: 'crt_d8', nome: 'Termo de adesão CONPET', emissor: 'CONPET', numero: 'CONPET-2025-3344', emissaoIso: '2025-02-10', vencimentoIso: '2028-02-10', status: 'ativa' },
 ]
 
 // ============================================================
